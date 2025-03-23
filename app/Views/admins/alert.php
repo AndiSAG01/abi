@@ -1,0 +1,20 @@
+
+  <?php if (session()->getFlashdata('success') != null): ?>
+      <script type='text/javascript'>
+          toastr.success('<?= session()->getFlashdata('success') ?>');
+      </script>
+  <?php elseif (session()->getFlashdata('error') != null): ?>
+      <script type='text/javascript'>
+          toastr.success('<?= session()->getFlashdata('error') ?>');
+      </script>
+  <?php elseif (session()->getFlashdata('info') != null): ?>
+      <script type='text/javascript'>
+          toastr.success('<?= session()->getFlashdata('info') ?>');
+      </script>
+  <?php elseif (session()->getFlashdata('warning') != null): ?>
+      <script type='text/javascript'>
+          toastr.success('<?= session()->getFlashdata('warning') ?>');
+      </script>
+  <?php endif ?>
+
+  
