@@ -4,9 +4,18 @@ namespace App\Controllers;
 
 use App\Models\Customer;
 use App\Models\Tour;
+use App\Libraries\BladeOneLibrary;
+
 
 class Home extends BaseController
 {
+    protected $blade;
+
+    public function __construct()
+    {
+        // Inisialisasi BladeOneLibrary satu kali di konstruktor
+        $this->blade = new BladeOneLibrary();
+    }
     public function index()
     {
         $tourModel = new Tour(); // Pastikan nama model sesuai
@@ -89,5 +98,12 @@ class Home extends BaseController
         }
 
         return false;
+    }
+
+    function test(){
+
+        $data['contoh'] = 'test';
+
+        return $this->blade->render('test',$data);
     }
 }
