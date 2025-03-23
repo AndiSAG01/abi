@@ -15,6 +15,7 @@ class Classification extends Model
     protected $allowedFields    = [
         'name'
     ];
+    
 
     protected bool $allowEmptyInserts = false;
     protected bool $updateOnlyChanged = true;
