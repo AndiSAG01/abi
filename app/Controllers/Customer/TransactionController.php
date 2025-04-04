@@ -207,7 +207,6 @@ class TransactionController extends BaseController
         $data = [
             'transactions' => $transactions
         ];
-
         return view('customers/transaction/table', $data);
         // return $this->blade->render('customers.transaction.table', $data);
     }
