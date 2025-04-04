@@ -28,9 +28,11 @@
 
 <body>
   <div class="container-scroller d-flex">
+    <div class="alert-container">
+        <?= view('/admins/alert') ?>
+    </div>
     <!-- partial:./partials/_sidebar.html -->
     <?= view('/partials/sidebar') ?>
-    <?= view('/admins/alert') ?>
     <!-- partial -->
     <div class="container-fluid page-body-wrapper">
       <!-- partial:./partials/_navbar.html -->

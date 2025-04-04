@@ -4,15 +4,17 @@ namespace App\Models;
 
 use CodeIgniter\Model;
 
-class Tour extends Model
+class Cart extends Model
 {
-    protected $table            = 'tour';
+    protected $table            = 'carts';
     protected $primaryKey       = 'id';
     protected $useAutoIncrement = true;
     protected $returnType       = 'array';
     protected $useSoftDeletes   = false;
     protected $protectFields    = true;
-    protected $allowedFields = ['name', 'location', 'ticket', 'information', 'information_detail', 'image', 'classification', 'category','status'];
+    protected $allowedFields    = [
+        'tour_id','customer_id'
+    ];
 
     protected bool $allowEmptyInserts = false;
     protected bool $updateOnlyChanged = true;
@@ -28,8 +30,8 @@ class Tour extends Model
     protected $deletedField  = 'deleted_at';
 
     // Validation
-    protected $validationRules = [];
-    protected $validationMessages = [];
+    protected $validationRules      = [];
+    protected $validationMessages   = [];
     protected $skipValidation       = false;
     protected $cleanValidationRules = true;
 
@@ -43,16 +45,5 @@ class Tour extends Model
     protected $afterFind      = [];
     protected $beforeDelete   = [];
     protected $afterDelete    = [];
-
- 
-    public function getTours()
-    {
-        return $this->db->table('tour')
-            ->select('tour.*, GROUP_CONCAT(DISTINCT classifications.name ORDER BY classifications.name ASC) AS classification_names, GROUP_CONCAT(DISTINCT categories.name ORDER BY categories.name ASC) AS category_names')
-            ->join('classifications', 'FIND_IN_SET(classifications.id, tour.classification)', 'left')
-            ->join('categories', 'FIND_IN_SET(categories.id, tour.category)', 'left')
-            ->groupBy('tour.id')
-            ->get()
-            ->getResultArray(); // Mengubah ke array asosiatif
-    }
+    
 }

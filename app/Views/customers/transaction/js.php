@@ -1,24 +1,39 @@
+<!-- kalender -->
 <script>
     document.addEventListener('DOMContentLoaded', function() {
         const calendar = document.getElementById('calendar');
-    const startBooking = '2025-03-01';
-        const endBooking = '2025-03-10';
-
+        const monthYearElement = document.getElementById('monthYear');
         const months = [
             'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
             'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'
         ];
 
-        let currentMonth = 2; // Mulai dari Maret
-        let currentYear = 2025; // Tahun yang ditampilkan
+        let today = new Date();
+        let currentMonth = today.getMonth();
+        let currentYear = today.getFullYear();
+        let bookings = []; // Menyimpan daftar tanggal booking
+
+        // **Ambil data booking dari server**
+        function fetchBookings() {
+            fetch('/getBookingDates') // Sesuaikan dengan endpoint CodeIgniter
+                .then(response => response.json())
+                .then(data => {
+                    bookings = data.map(booking => ({
+                        start: booking.start_date,
+                        end: booking.end_date
+                    }));
+                    showMonth(currentMonth, currentYear); // **Tampilkan kalender setelah data booking didapat**
+                })
+                .catch(error => console.error('Error fetching booking data:', error));
+        }
 
         function showMonth(month, year) {
             calendar.innerHTML = '';
+
             const monthContainer = document.createElement('div');
             monthContainer.classList.add('month-container');
-            const monthTitle = document.createElement('h4');
-            monthTitle.innerText = `${months[month]} ${year}`;
-            monthContainer.appendChild(monthTitle);
+
+            monthYearElement.innerText = `${months[month]} ${year}`;
 
             const daysInMonth = new Date(year, month + 1, 0).getDate();
             const firstDay = new Date(year, month, 1).getDay();
@@ -38,8 +53,15 @@
                 dayElement.classList.add('day');
                 dayElement.innerText = day;
 
-                if (date >= startBooking && date <= endBooking) {
-                    dayElement.classList.add('booked');
+                let isBooked = false;
+                bookings.forEach(booking => {
+                    if (date >= booking.start && date <= booking.end) {
+                        isBooked = true;
+                    }
+                });
+
+                if (isBooked) {
+                    dayElement.classList.add('booked'); // Tambahkan kelas 'booked' jika tanggal terbooking
                 } else {
                     dayElement.classList.add('available');
                 }
@@ -50,8 +72,6 @@
             monthContainer.appendChild(daysGrid);
             calendar.appendChild(monthContainer);
         }
-
-        showMonth(currentMonth, currentYear);
 
         document.getElementById('prevMonth').addEventListener('click', function() {
             if (currentMonth > 0) {
@@ -72,33 +92,8 @@
             }
             showMonth(currentMonth, currentYear);
         });
-    });
-</script>
 
- 
-<script src="/admin/vendors/sweetalert/sweetalert2.all.min.js"></script>
-<script>
-    document.addEventListener("DOMContentLoaded", function() {
-        document.querySelectorAll(".btn-delete").forEach(function(button) {
-            button.addEventListener("click", function() {
-                let categoryId = this.getAttribute("data-id");
-
-                Swal.fire({
-                    title: "Apakah Anda yakin?",
-                    text: "Data akan dihapus secara permanen!",
-                    icon: "warning",
-                    showCancelButton: true,
-                    confirmButtonColor: "#3085d6",
-                    cancelButtonColor: "#d33",
-                    confirmButtonText: "Ya, hapus!",
-                    cancelButtonText: "Batal"
-                }).then((result) => {
-                    if (result.isConfirmed) {
-                        window.location.href = "<?= base_url('/transactions/delete/') ?>" + categoryId;
-                    }
-                });
-            });
-        });
+        fetchBookings(); // **Ambil data booking saat halaman dimuat**
     });
 </script>
 
@@ -181,3 +176,88 @@
         margin-bottom: 10px;
     }
 </style>
+<!-- end-kalender -->
+
+
+
+<!-- sweetaleert -->
+<script src="/admin/vendors/sweetalert/sweetalert2.all.min.js"></script>
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        document.querySelectorAll(".btn-delete").forEach(function(button) {
+            button.addEventListener("click", function() {
+                let categoryId = this.getAttribute("data-id");
+
+                Swal.fire({
+                    title: "Apakah Anda yakin?",
+                    text: "Data akan dihapus secara permanen!",
+                    icon: "warning",
+                    showCancelButton: true,
+                    confirmButtonColor: "#3085d6",
+                    cancelButtonColor: "#d33",
+                    confirmButtonText: "Ya, hapus!",
+                    cancelButtonText: "Batal"
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        window.location.href = "<?= base_url('/transactions/delete/') ?>" + categoryId;
+                    }
+                });
+            });
+        });
+    });
+</script>
+<!-- end-sweetalert -->
+
+
+<!-- subtotal -->
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script>
+    $(document).ready(function() {
+        function updateSubtotal() {
+            let totalTicketPrice = <?= $totalTicketPrice ?>; // Harga tiket per orang
+            let totalPeople = parseInt($('#total_people').val()) || 0;
+            let totalItemPrice = 0;
+
+            // Hitung total harga item berdasarkan qty
+            $('.item-checkbox:checked').each(function() {
+                let itemPrice = parseInt($(this).data('price')) || 0;
+                let qty = parseInt($(this).closest('.form-check').find('input[name="qty[]"]').val()) || 1;
+                totalItemPrice += itemPrice * qty;
+            });
+
+            // Hitung total amount
+            let amount = (totalTicketPrice * totalPeople) + totalItemPrice;
+            
+            // Tampilkan hasilnya
+            $('#subtotal').text('Rp ' + amount.toLocaleString('id-ID'));
+        }
+
+        // Event listener untuk jumlah orang, checkbox item, dan qty
+        $('#total_people, .item-checkbox, input[name="qty[]"]').on('input change', updateSubtotal);
+
+        // Event listener untuk qty agar perubahan diperhitungkan
+        $(document).on('input', 'input[name="qty[]"]', updateSubtotal);
+
+        // Jalankan fungsi pertama kali untuk menampilkan harga awal
+        updateSubtotal();
+    });
+</script>
+<!-- end-subtotal -->
+
+<!-- atur-tanggal -->
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        let today = new Date().toISOString().split('T')[0]; // Ambil tanggal hari ini dalam format YYYY-MM-DD
+        
+        // Atur tanggal minimal pada input date
+        document.getElementById("start_date").setAttribute("min", today);
+        document.getElementById("end_date").setAttribute("min", today);
+
+        // Pastikan tanggal end_date tidak lebih kecil dari start_date
+        document.getElementById("start_date").addEventListener("change", function () {
+            document.getElementById("end_date").setAttribute("min", this.value);
+        });
+    });
+</script>
+<!-- end-atur-tanggal -->
+
