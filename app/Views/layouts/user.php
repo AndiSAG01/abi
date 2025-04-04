@@ -42,7 +42,7 @@
 </style>
 
 <body>
-    <?= view('partials/navbar'); ?>
+    <?= view('partials/navbar'); ?> 
   
 
     <!-- END nav -->

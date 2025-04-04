@@ -9,6 +9,7 @@ use App\Controllers\Admin\UserController;
 use App\Controllers\Auth\LoginController;
 use App\Controllers\Auth\LogoutController;
 use App\Controllers\Auth\RegisterController;
+use App\Controllers\Customer\CartController;
 use App\Controllers\Customer\LoginController as CustomerLoginController;
 use App\Controllers\Customer\ProfileController;
 use App\Controllers\Customer\RegisterController as CustomerRegisterController;
@@ -100,11 +101,16 @@ $routes->get('/booking/(:num)',[Home::class,'booking']);
 
 $routes->get('/profile',[ProfileController::class,'index']);
 $routes->post('/profile/update',[ProfileController::class,'update']);
+#cart
+$routes->post('/transactions/add',[CartController::class,'add_list']);
+$routes->get('/transactions/delete/(:num)',[CartController::class,'delete_list']);
+#endcart
 
+#transactions
 $routes->get('/transaction',[TransactionController::class,'index']);
-$routes->post('/transactions/add',[TransactionController::class,'add_list']);
-$routes->get('/transactions/delete/(:num)',[TransactionController::class,'delete_list']);
-$routes->post('/transactions/update/(:num)',[TransactionController::class,'updateTransaction']);
+$routes->post('/transactions/store',[TransactionController::class,'store']);
+$routes->get('/getBookingDates',[TransactionController::class,'getBookingDates']);
+#endtransactions
 
 
 $routes->get('/transactions-table',[TransactionController::class,'table']);

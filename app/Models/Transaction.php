@@ -14,13 +14,12 @@ class Transaction extends Model
     protected $protectFields    = true;
     protected $allowedFields    = [
         'customer_id',
-        'tour_id',
+        'cart_id',
         'item_id',
+        'qty',
         'amount',
         'start_date',
         'end_date',
-        'payment',
-        'image',
         'total_people',
         'status'
     ];
@@ -55,48 +54,62 @@ class Transaction extends Model
     protected $beforeDelete   = [];
     protected $afterDelete    = [];
 
-    // Relasi ke tabel customers
-    public function getTransactionWithUser()
+    public function getTransactionsByCustomer($customerId)
     {
-        return $this->select('transactions.*, customers.name AS customer_name')
-            ->join('customers', 'customers.id = transactions.customer_id')
+        return $this->select('transactions.*, 
+        customers.name AS customer_name, 
+        tour.name AS tour_name, 
+        tour.location AS tour_location, 
+        tour.ticket AS tour_ticket,
+        tour.image AS tour_image,
+        GROUP_CONCAT(DISTINCT classifications.name ORDER BY classifications.name ASC) AS classification_names,
+        GROUP_CONCAT(DISTINCT categories.name ORDER BY categories.name ASC) AS category_names,
+        carts.id AS cart_id')
+            ->join('carts', 'carts.id = transactions.cart_id', 'left')
+            ->join('customers', 'customers.id = transactions.customer_id', 'left')
+            ->join('tour', 'tour.id = carts.tour_id', 'left')
+            ->join('classifications', 'FIND_IN_SET(classifications.id, tour.classification)', 'left')
+            ->join('categories', 'FIND_IN_SET(categories.id, tour.category)', 'left')
+            ->where('transactions.customer_id', $customerId)
+            ->groupBy('transactions.id')
+            ->orderBy('transactions.created_at', 'DESC')
             ->findAll();
     }
 
-    // Relasi ke tabel customers, tour, items
-    public function getTransactionDetails($id)
+    public function getCartByCustomer($customerId)
     {
-        return $this->select('transactions.*, 
-                                customers.name AS customer_name, 
-                                tour.name AS tour_name, 
-                                items.name AS item_name')
-            ->join('customers', 'customers.id = transactions.customer_id')
-            ->join('tour', 'tour.id = transactions.tour_id')
-            ->join('items', 'items.id = transactions.item_id', 'left') // Pakai left join biar item_id bisa null
-            ->where('transactions.id', $id)
-            ->first();
-    }
+        $cartModel = new Cart();
 
-    // Relasi lengkap untuk semua tabel
-    public function getAllTransactions()
-    {
-        return $this->db->table('transactions')
-            ->select('transactions.*, 
-                 customers.name AS customer_name, 
-                 tour.name AS tour_name, 
-                 tour.location AS tour_location, 
-                 tour.image AS tour_image,
-                 GROUP_CONCAT(DISTINCT classifications.name ORDER BY classifications.name ASC) AS classification_names,
-                 GROUP_CONCAT(DISTINCT categories.name ORDER BY categories.name ASC) AS category_names,
-                 items.name AS item_name')
-            ->join('customers', 'customers.id = transactions.customer_id')
-            ->join('tour', 'tour.id = transactions.tour_id')
-            ->join('items', 'items.id = transactions.item_id', 'left')
+        return $cartModel->select('carts.*, carts.tour_id, 
+            tour.name AS tour_name, 
+            tour.location AS tour_location, 
+            tour.ticket AS tour_ticket,
+            tour.image AS tour_image,
+            GROUP_CONCAT(DISTINCT classifications.name ORDER BY classifications.name ASC) AS classification_names,
+            GROUP_CONCAT(DISTINCT categories.name ORDER BY categories.name ASC) AS category_names')
+            ->join('tour', 'tour.id = carts.tour_id', 'left')
             ->join('classifications', 'FIND_IN_SET(classifications.id, tour.classification)', 'left')
             ->join('categories', 'FIND_IN_SET(categories.id, tour.category)', 'left')
-            ->groupBy('transactions.id')
-            ->orderBy('transactions.created_at', 'DESC')
-            ->get()
-            ->getResultArray();
+            ->where('carts.customer_id', $customerId)
+            ->groupBy('carts.id')
+            ->findAll();
+    }
+    public function getCartBytransactions($customerId)
+    {
+        $cartModel = new Cart();
+
+        return $cartModel->select('carts.*, carts.tour_id, 
+        tour.name AS tour_name, 
+        tour.location AS tour_location, 
+        tour.ticket AS ticket_price,
+        tour.image AS tour_image,
+        GROUP_CONCAT(DISTINCT classifications.name ORDER BY classifications.name ASC) AS classification_names,
+        GROUP_CONCAT(DISTINCT categories.name ORDER BY categories.name ASC) AS category_names')
+            ->join('tour', 'tour.id = carts.tour_id', 'left')
+            ->join('classifications', 'FIND_IN_SET(classifications.id, tour.classification)', 'left')
+            ->join('categories', 'FIND_IN_SET(categories.id, tour.category)', 'left')
+            ->where('carts.customer_id', $customerId)
+            ->groupBy('carts.id')
+            ->first(); // Menggunakan first() agar hanya satu data yang diambil
     }
 }

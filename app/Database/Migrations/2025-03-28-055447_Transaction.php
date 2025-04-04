@@ -20,15 +20,16 @@ class Transaction extends Migration
                 'constraint' => 11,
                 'unsigned' => true,
             ],
-            'tour_id' => [
-                'type' => 'INT',
-                'constraint' => 11,
-                'unsigned' => true,
+            'cart_id' => [
+                'type' => 'TEXT',
+                'null' => true,
             ],
             'item_id' => [
-                'type' => 'INT',
-                'constraint' => 11,
-                'unsigned' => true,
+                'type' => 'TEXT',
+                'null' => true,
+            ],
+            'qty' => [
+                'type' => 'TEXT', // Simpan jumlah item dalam format string yang dipisahkan koma
                 'null' => true,
             ],
             'amount' => [
@@ -44,17 +45,7 @@ class Transaction extends Migration
                 'type' => 'DATE',
                 'null' => true,
             ],
-            'payment' => [
-                'type' => 'VARCHAR',
-                'constraint' => 255,
-                'null' => true,
-            ],
             'total_people' => [
-                'type' => 'VARCHAR',
-                'constraint' => 255,
-                'null' => true,
-            ],
-            'image' => [
                 'type' => 'VARCHAR',
                 'constraint' => 255,
                 'null' => true,
@@ -76,10 +67,11 @@ class Transaction extends Migration
 
         $this->forge->addKey('id', true);
         $this->forge->addForeignKey('customer_id', 'customers', 'id', 'CASCADE', 'CASCADE');
-        $this->forge->addForeignKey('tour_id', 'tour', 'id', 'CASCADE', 'CASCADE');
-        $this->forge->addForeignKey('item_id', 'items', 'id', 'CASCADE', 'CASCADE');
+
         $this->forge->createTable('transactions');
     }
+
+
 
 
     public function down()
