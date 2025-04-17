@@ -10,6 +10,7 @@
                 style="font-family: 'Abril Fatface', cursive;">
                 Tabel Transaksi Tour
             </h3>
+            
             <div class="card-body p-4">
                 <div class="table-responsive">
                     <table class="table table-hover table-striped align-middle">
