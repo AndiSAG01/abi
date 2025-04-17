@@ -13,7 +13,7 @@ class Transaction extends Model
     protected $useSoftDeletes   = false;
     protected $protectFields    = true;
     protected $allowedFields    = [
-        'customer_id',
+        'user_id',
         'cart_id',
         'item_id',
         'qty',
@@ -54,29 +54,32 @@ class Transaction extends Model
     protected $beforeDelete   = [];
     protected $afterDelete    = [];
 
-    public function getTransactionsByCustomer($customerId)
+    public function getTransactionsByCustomer($userId)
     {
         return $this->select('transactions.*, 
-        customers.name AS customer_name, 
-        tour.name AS tour_name, 
-        tour.location AS tour_location, 
-        tour.ticket AS tour_ticket,
-        tour.image AS tour_image,
-        GROUP_CONCAT(DISTINCT classifications.name ORDER BY classifications.name ASC) AS classification_names,
-        GROUP_CONCAT(DISTINCT categories.name ORDER BY categories.name ASC) AS category_names,
-        carts.id AS cart_id')
+            users.username AS username, 
+            tour.name AS tour_name, 
+            tour.location AS tour_location, 
+            tour.ticket AS tour_ticket,
+            tour.image AS tour_image,
+            GROUP_CONCAT(DISTINCT classifications.name ORDER BY classifications.name ASC) AS classification_names,
+            GROUP_CONCAT(DISTINCT categories.name ORDER BY categories.name ASC) AS category_names,
+            GROUP_CONCAT(DISTINCT items.name ORDER BY items.name ASC) AS items_names, 
+            transactions.item_id,
+            transactions.qty')
             ->join('carts', 'carts.id = transactions.cart_id', 'left')
-            ->join('customers', 'customers.id = transactions.customer_id', 'left')
+            ->join('users', 'users.id = transactions.user_id', 'left')
             ->join('tour', 'tour.id = carts.tour_id', 'left')
             ->join('classifications', 'FIND_IN_SET(classifications.id, tour.classification)', 'left')
             ->join('categories', 'FIND_IN_SET(categories.id, tour.category)', 'left')
-            ->where('transactions.customer_id', $customerId)
+            ->join('items', 'FIND_IN_SET(items.id, transactions.item_id)', 'left')  // Perbaiki join agar sesuai dengan banyak ID
+            ->where('transactions.user_id', $userId)
             ->groupBy('transactions.id')
             ->orderBy('transactions.created_at', 'DESC')
             ->findAll();
     }
 
-    public function getCartByCustomer($customerId)
+    public function getCartByCustomer($userId)
     {
         $cartModel = new Cart();
 
@@ -90,11 +93,11 @@ class Transaction extends Model
             ->join('tour', 'tour.id = carts.tour_id', 'left')
             ->join('classifications', 'FIND_IN_SET(classifications.id, tour.classification)', 'left')
             ->join('categories', 'FIND_IN_SET(categories.id, tour.category)', 'left')
-            ->where('carts.customer_id', $customerId)
+            ->where('carts.user_id', $userId)
             ->groupBy('carts.id')
             ->findAll();
     }
-    public function getCartBytransactions($customerId)
+    public function getCartBytransactions($userId)
     {
         $cartModel = new Cart();
 
@@ -108,8 +111,15 @@ class Transaction extends Model
             ->join('tour', 'tour.id = carts.tour_id', 'left')
             ->join('classifications', 'FIND_IN_SET(classifications.id, tour.classification)', 'left')
             ->join('categories', 'FIND_IN_SET(categories.id, tour.category)', 'left')
-            ->where('carts.customer_id', $customerId)
+            ->where('carts.user_id', $userId)
             ->groupBy('carts.id')
             ->first(); // Menggunakan first() agar hanya satu data yang diambil
+    }
+
+    public function getPayments($transactionId) 
+    {
+        return model('Payment')
+            ->where('transaction_id', $transactionId)
+            ->findAll();
     }
 }

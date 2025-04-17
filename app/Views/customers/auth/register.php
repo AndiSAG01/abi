@@ -4,9 +4,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Travel Blogger Login</title>
+    <title>Travel Blogger Registrasi</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <?= view('layouts/font') ?>
     <style>
         body {
             background: rgb(255, 175, 0);
@@ -79,6 +78,31 @@
             color: #1e3d7d;
             font-weight: bold;
         }
+
+        @media (max-width: 767px) {
+            .login-box {
+                flex-direction: column;
+                max-width: 400px;
+                align-items: center;
+            }
+
+            .login-image {
+                width: 100%;
+                height: 200px;
+                background-size: contain;
+                background-repeat: no-repeat;
+            }
+
+            .login-form {
+                width: 100%;
+                padding: 20px;
+            }
+        }
+
+        .form-control {
+            font-size: 14px;
+            padding: 10px;
+        }
     </style>
 </head>
 
@@ -90,42 +114,29 @@
             </div>
             <div class="login-form">
                 <h3 class="mb-4" style="font-family: Abril Fatface, serif;">TOUR BLOGGER</h3>
-                <p style="font-size:13px">Masukan Data Identitas Dengan <span class="text-success">Benar</span> agar tidak terjadi <span class="text-danger">Kesalahan</span> Informasi 😉</p>
+                <p style="font-size:13px">Masukan Data Identitas Dengan <span class="text-success">Benar</span> agar
+                    tidak terjadi <span class="text-danger">Kesalahan</span> Informasi 😉</p>
 
-                <?php if ($errors = session()->getFlashdata('error')) : ?>
-                    <div class="alert alert-danger">
-                        <ul>
-                            <?php if (is_array($errors)) : ?>
-                                <?php foreach ($errors as $err) : ?>
-                                    <li><?= esc($err) ?></li>
-                                <?php endforeach; ?>
-                            <?php else : ?>
-                                <li><?= esc($errors) ?></li>
-                            <?php endif; ?>
-                        </ul>
-                    </div>
-                <?php endif; ?>
+                    <?= view('Myth\Auth\Views\_message_block') ?>
 
-                <form action="<?= base_url('register_costumer'); ?>" method="POST" enctype="multipart/form-data">
+                <form action="<?= base_url('register') ?>" method="POST" enctype="multipart/form-data">
                     <?= csrf_field() ?>
                     <div class="row">
                         <div class="col-md-6">
                             <div class="form-group">
-                                <label for="name">Nama</label>
+                                <label for="username">Nama</label>
                                 <div class="input-group mb-3">
                                     <span class="input-group-text"><i class="fas fa-signature"></i></span>
-                                    <input type="text" class="form-control" name="name" id="name" placeholder="Masukan Nama Lengkap Anda" value="<?= set_value('name'); ?>" required>
+                                    <input type="text" class="form-control <?php if (session('errors.username')) : ?>is-invalid<?php endif ?>" name="username" placeholder="<?=lang('Auth.username')?>" value="<?= old('username') ?>"
+                                        required>
                                 </div>
-                                <?php if (isset($errors['name'])) : ?>
-                                    <small class="text-danger"><?= esc($errors['name']) ?></small>
-                                <?php endif; ?>
                             </div>
 
                             <div class="form-group">
                                 <label for="email">Email</label>
                                 <div class="input-group mb-3">
                                     <span class="input-group-text"><i class="fas fa-at"></i></span>
-                                    <input type="email" class="form-control" name="email" id="email" placeholder="Masukan Email Anda" value="<?= set_value('email'); ?>" required>
+                                    <input type="email" class="form-control <?php if (session('errors.email')) : ?>is-invalid<?php endif ?>" name="email" placeholder="<?=lang('Auth.email')?>" value="<?= old('email') ?>" required>
                                 </div>
                                 <?php if (isset($errors['email'])) : ?>
                                     <small class="text-danger"><?= esc($errors['email']) ?></small>
@@ -138,7 +149,8 @@
                                 <label for="telphone">Nomor Telepon</label>
                                 <div class="input-group mb-3">
                                     <span class="input-group-text"><i class="fas fa-phone-alt"></i></span>
-                                    <input type="tel" class="form-control" name="telphone" id="telphone" placeholder="Masukan Nomor Telepon Anda" value="<?= set_value('telphone'); ?>" pattern="[0-9]+" title="Masukkan hanya angka" required>
+                                    <input type="number" class="form-control <?php if (session('errors.telphone')) : ?>is-invalid<?php endif ?>" name="telphone" id="telphone"placeholder="Masukan Nomor Telphone Anda" value="<?= old('telphone') ?>"
+                                        pattern="[0-9]+" title="Masukkan hanya angka" required>
                                 </div>
                                 <?php if (isset($errors['telphone'])) : ?>
                                     <small class="text-danger"><?= esc($errors['telphone']) ?></small>
@@ -149,7 +161,9 @@
                                 <label for="password">Password</label>
                                 <div class="input-group mb-3">
                                     <span class="input-group-text"><i class="fas fa-key"></i></span>
-                                    <input type="password" class="form-control" name="password" id="password" placeholder="Minimal 8 karakter" minlength="8" title="Minimal 8 karakter" required>
+                                    <input type="password" class="form-control" name="password" id="password"
+                                        placeholder="Minimal 8 karakter" minlength="8" title="Minimal 8 karakter"
+                                        required>
                                 </div>
                                 <?php if (isset($errors['password'])) : ?>
                                     <small class="text-danger"><?= esc($errors['password']) ?></small>
@@ -159,14 +173,16 @@
 
                         <div class="form-group mb-2">
                             <label for="image">Foto (Opsional)</label>
-                            <input type="file" name="image" id="image" class="form-control" accept="image/*" onchange="previewImage(event)">
-                            <img id="imagePreview" src="" alt="Preview Gambar" style="display:none; max-width:100px; margin-top:10px;">
+                            <input type="file" name="image" id="image" class="form-control <?php if (session('errors.image')) : ?>is-invalid<?php endif ?>" accept="image/*"
+                                onchange="previewImage(event)">
+                            <img id="imagePreview" src="" alt="Preview Gambar"
+                                style="display:none; max-width:100px; margin-top:10px;">
                         </div>
                     </div>
 
                     <div class="form-group">
                         <button class="btn btn-primary" type="submit">Register</button>
-                        <span> Sudah Punya Akun? Silahkan <a href="<?= base_url('logins'); ?>">Login</a></span>
+                        <span> Sudah Punya Akun? Silahkan <a href="<?= base_url('login') ?>">Login</a></span>
                     </div>
                 </form>
             </div>

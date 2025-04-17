@@ -31,12 +31,12 @@ class Home extends BaseController
             'customer' => $customer // Kirim data customer ke view
         ];
 
-        return view('customers/dashboard', $data);
+        return $this->blade->render('customers.dashboard', $data);
     }
 
     public function about()
     {
-        return view('customers/about', ['title' => 'About Page']);
+        return $this->blade->render('customers.about', ['title' => 'About Page']);
     }
     public function destination()
     {
@@ -49,7 +49,8 @@ class Home extends BaseController
             'title' => 'Home Page',
             'tours' => $tourModel->findAll()
         ];
-        return view('customers/destination', $data);
+        // return view('customers/destination', $data);
+        return $this->blade->render('customers.destination', $data);
     }
     public function destination_detail($id)
     {
@@ -65,7 +66,8 @@ class Home extends BaseController
             ->groupBy('tour.id')
             ->first();
 
-        return view('customers/destination_detail', $data);
+        // return view('customers/destination_detail', $data);
+        return $this->blade->render('customers.destination_detail', $data);
     }
     public function admin()
     {
@@ -98,12 +100,5 @@ class Home extends BaseController
         }
 
         return false;
-    }
-
-    function test(){
-
-        $data['contoh'] = 'test';
-
-        return $this->blade->render('test',$data);
     }
 }

@@ -48,7 +48,8 @@ class Customer extends Migration
             'updated_at' => [
                 'type' => 'datetime',
                 'null' => TRUE
-            ]
+            ],
+            'deleted_at' => ['type' => 'DATETIME', 'null' => true],
         ]);
 
         $this->forge->addKey('id', TRUE);

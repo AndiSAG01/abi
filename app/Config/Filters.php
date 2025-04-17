@@ -35,6 +35,10 @@ class Filters extends BaseFilters
         'pagecache'     => PageCache::class,
         'performance'   => PerformanceMetrics::class,
         'auth' => \App\Filters\AuthFilter::class, // Tambahkan ini
+        'admin' => \App\Filters\AdminFilter::class,
+        'login'      => \Myth\Auth\Filters\LoginFilter::class,
+        'role'       => \Myth\Auth\Filters\RoleFilter::class,
+        'permission' => \Myth\Auth\Filters\PermissionFilter::class,
     ];
 
     /**
@@ -60,6 +64,8 @@ class Filters extends BaseFilters
             'performance', // Performance Metrics
             'toolbar',     // Debug Toolbar
         ],
+        'role' => ['after' => ['login', 'auth/login']],
+
     ];
 
     /**

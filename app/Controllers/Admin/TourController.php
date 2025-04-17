@@ -3,6 +3,7 @@
 namespace App\Controllers\Admin;
 
 use App\Controllers\BaseController;
+use App\Libraries\BladeOneLibrary;
 use App\Models\Category;
 use App\Models\Classification;
 use App\Models\Tour;
@@ -11,13 +12,22 @@ use CodeIgniter\I18n\Time;
 
 class TourController extends BaseController
 {
+    protected $blade;
+
+    public function __construct()
+    {
+        // Inisialisasi BladeOneLibrary satu kali di konstruktor
+        $this->blade = new BladeOneLibrary();
+    }
     public function index()
     {
         $tourModel = new Tour();
         $data['tours'] = $tourModel->getTours();
-        $data['user_name'] = session()->get('name'); // Ambil nama dari session
+        $data['user_name'] = session()->get('username'); // Ambil nama dari session
         $data['today'] = Time::now('Asia/Jakarta', 'en')->toLocalizedString('MMM d, yyyy');
-        return view('admins/tour/index', $data);
+        // return view('admins/tour/index', $data);
+        // Menggunakan BladeOneLibrary
+        return $this->blade->render('admins.tour.index', $data);
     }
 
     public function create()
@@ -29,10 +39,11 @@ class TourController extends BaseController
             'classifications' => $classificationModel->findAll(),
             'categories' => $categoryModel->findAll(),
         ];
-        $data['user_name'] = session()->get('name');
+        $data['user_name'] = session()->get('username');
         $data['today'] = Time::now('Asia/Jakarta', 'en')->toLocalizedString('MMM d, yyyy');
 
-        return view('admins/tour/create', $data);
+        // Menggunakan BladeOneLibrary
+        return $this->blade->render('admins.tour.create', $data);
     }
 
     public function store()
@@ -95,10 +106,12 @@ class TourController extends BaseController
             return redirect()->to('/admins/tour')->with('error', 'Tour tidak ditemukan!');
         }
 
-        $data['user_name'] = session()->get('name');
+        $data['user_name'] = session()->get('username');
         $data['today'] = Time::now('Asia/Jakarta', 'en')->toLocalizedString('MMM d, yyyy');
 
-        return view('admins/tour/show', $data);
+        // return view('admins/tour/show', $data);
+        // Menggunakan BladeOneLibrary
+        return $this->blade->render('admins.tour.show', $data);
     }
 
     public function edit($id)
@@ -121,7 +134,7 @@ class TourController extends BaseController
 
         $data = [
             'tour' => $tour,
-            'user_name' => session()->get('name'),
+            'user_name' => session()->get('username'),
             'today' => Time::now('Asia/Jakarta', 'en')->toLocalizedString('MMM d, YYYY'),
             'classifications' => $classificationModel->findAll(),
             'categories' => $categoryModel->findAll(),
@@ -129,7 +142,9 @@ class TourController extends BaseController
             'tourCategories' => $tourCategories // Tambahkan variabel ini
         ];
 
-        return view('admins/tour/edit', $data);
+        // return view('admins/tour/edit', $data);
+        // Menggunakan BladeOneLibrary
+        return $this->blade->render('admins.tour.edit', $data);
     }
 
 

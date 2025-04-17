@@ -6,27 +6,30 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Travel Blogger Login</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <?= view('layouts/font')?>
+    <script src="https://kit.fontawesome.com/be87c3e44a.js" crossorigin="anonymous"></script>
     <style>
         body {
-            background: rgb(255, 175, 0);
-            background: linear-gradient(125deg, rgba(255, 175, 0, 1) 0%, rgba(255, 175, 0, 1) 33%, rgba(255, 255, 255, 0) 33%), url('/admin/images/gunung.png');
-            background-size: cover;
-            background-position: center;
-            background-repeat: no-repeat;
+            background: linear-gradient(125deg, rgba(255, 175, 0, 1) 0%, rgba(255, 175, 0, 1) 33%, rgba(255, 255, 255, 0) 33%), url('/admin/images/gunung.png') no-repeat center center/cover;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 15px;
         }
-
 
         .login-container {
             display: flex;
             justify-content: center;
             align-items: center;
-            height: 100vh;
+            min-height: 100vh;
+            width: 100%;
         }
 
         .login-box {
             display: flex;
+            flex-direction: row;
             width: 800px;
+            max-width: 90%;
             background: white;
             border-radius: 10px;
             overflow: hidden;
@@ -36,28 +39,13 @@
         .login-image {
             width: 50%;
             background: url('/admin/images/logo.jpg') no-repeat center center/cover;
-            position: relative;
-        }
-
-        .login-image::after {
-            content: "";
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-        }
-
-        .login-image-text {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            color: white;
-            font-size: 18px;
-            font-weight: bold;
+            display: flex;
+            align-items: center;
+            justify-content: center;
             text-align: center;
-            z-index: 1;
+            color: white;
+            font-weight: bold;
+            font-size: 18px;
         }
 
         .login-form {
@@ -65,12 +53,10 @@
             padding: 40px;
             background: #1e3d7d;
             color: white;
-        }
-
-        .social-icons i {
-            font-size: 20px;
-            margin: 10px;
-            cursor: pointer;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            text-align: center;
         }
 
         .btn-login {
@@ -79,6 +65,32 @@
             color: #1e3d7d;
             font-weight: bold;
         }
+
+        /* Mode Mobile */
+        @media (max-width: 767px) {
+            .login-box {
+                flex-direction: column;
+                max-width: 400px;
+                align-items: center;
+            }
+
+            .login-image {
+                width: 100%;
+                height: 200px;
+                background-size: contain;
+                background-repeat: no-repeat;
+            }
+
+            .login-form {
+                width: 100%;
+                padding: 20px;
+            }
+        }
+
+        .form-control {
+            font-size: 14px;
+            padding: 10px;
+        }
     </style>
 </head>
 
@@ -86,44 +98,35 @@
     <div class="login-container">
         <div class="login-box">
             <div class="login-image">
-                <div class="login-image-text"></div>
             </div>
             <div class="login-form">
-                <h3 class="mb-4" style="font-family: Abril Fatface, serif;">TOUR BLOGGER</h3>
+                <h3 class="mb-4">TOUR BLOGGER</h3>
                 <p style="font-size:12px">Masukan Email dan Password Dengan Benar 😉</p>
-                <?php if (session()->getFlashdata('success')) : ?>
-                    <div class="alert alert-success">
-                        <?php echo session()->getFlashdata('success'); ?>
+                <?= view('Myth\Auth\Views\_message_block') ?>
+
+                <form action="<?= route_to('login') ?>" method="post">
+                    <?= csrf_field() ?>
+                    <div class="input-group mb-3">
+                        <span class="input-group-text"><i class="fas fa-at"></i></span>
+                        <input type="email" class="form-control <?php if (session('errors.login')) : ?>is-invalid<?php endif ?>" name="login" placeholder="<?= lang('Auth.email') ?>">
+                        <div class="invalid-feedback">
+                            <?= session('errors.login') ?>
+                        </div>
                     </div>
-                <?php endif; ?>
-
-                <?php if (session()->getFlashdata('error')) : ?>
-                    <div class="alert alert-danger">
-                        <?php echo session()->getFlashdata('error'); ?>
+                    <div class="input-group mb-3">
+                        <span class="input-group-text"><i class="fas fa-key"></i></span>
+                        <input type="password" name="password" class="form-control  <?php if (session('errors.password')) : ?>is-invalid<?php endif ?>" placeholder="<?= lang('Auth.password') ?>">
+                        <div class="invalid-feedback">
+                            <?= session('errors.password') ?>
+                        </div>
                     </div>
-                <?php endif; ?>
-
-                <?= validation_list_errors() ?>
-
-                <?= form_open('logins'); ?>
-                <div class="input-group mb-3">
-                    <span class="input-group-text" id="basic-addon1"><i class="fas fa-at"></i></span>
-                    <input type="email" class="form-control" name="email" placeholder="Masukan Email Anda" aria-label="Email" aria-describedby="basic-addon1">
-                </div>
-                <div class="input-group mb-3">
-                    <span class="input-group-text" id="basic-addon1"><i class="fas fa-key"></i></span>
-                    <input type="password" class="form-control" name="password" placeholder="Masukan Password Anda" aria-label="Password" aria-describedby="basic-addon1">
-                </div>
-                <div class="form-group">
-                    <button class="btn btn-primary">Login</button>
-                    <span>Sudah Punya Akun? <a href="<?php echo base_url('register_costumer'); ?>">Buat akun</a></span>
-                </div>
-                <?= form_close(); ?>
+                    <button type="submit" class="btn btn-login">Login</button>
+                </form>
+                <p class="mt-2">Belum Punya Akun? <a href="<?php echo base_url('register'); ?>">Buat akun</a></p>
+                <a href="<?= url_to('forgot') ?>" class="text-white">Lupa Password?</a>
             </div>
         </div>
     </div>
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css"></script>
-    <script src="https://kit.fontawesome.com/be87c3e44a.js" crossorigin="anonymous"></script>
 </body>
 
 </html>

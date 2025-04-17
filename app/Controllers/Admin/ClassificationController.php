@@ -3,6 +3,7 @@
 namespace App\Controllers\Admin;
 
 use App\Controllers\BaseController;
+use App\Libraries\BladeOneLibrary;
 use App\Models\Classification;
 use CodeIgniter\HTTP\ResponseInterface;
 use CodeIgniter\I18n\Time;
@@ -12,9 +13,12 @@ class ClassificationController extends BaseController
 {
     protected $classificationModel;
     protected $helpers = ['form', 'url'];
+    protected $blade;
 
+    
     public function __construct()
     {
+        $this->blade = new BladeOneLibrary();
         $this->classificationModel = new Classification();
     }
 
@@ -26,9 +30,11 @@ class ClassificationController extends BaseController
             'classifications' => $this->classificationModel->paginate(5, 'classifications'),
             'pager' => $this->classificationModel->pager
         ];
-        $data['user_name'] = session()->get('name'); // Ambil nama dari session
+        $data['user_name'] = session()->get('username');
+        // Ambil nama dari session
         $data['today'] = Time::now('Asia/Jakarta', 'en')->toLocalizedString('MMM d, yyyy');
-        return view('admins/classification/index', $data);
+        // return view('admins/classification/index', $data);
+        return $this->blade->render('admins.classification.index', $data);
     }
 
     public function store()
@@ -57,9 +63,11 @@ class ClassificationController extends BaseController
     public function edit($id)
     {
         $data['classification'] = $this->classificationModel->find($id);
-        $data['user_name'] = session()->get('name'); // Ambil nama dari session
+        $data['user_name'] = session()->get('username');
+        // Ambil nama dari session
         $data['today'] = Time::now('Asia/Jakarta', 'en')->toLocalizedString('MMM d, yyyy');
-        return view('admins/classification/edit', $data);
+        // return view('admins/classification/edit', $data);
+        return $this->blade->render('admins.classification.edit', $data);
     }
 
     public function update($id)

@@ -13,5 +13,6 @@ class DatabaseSeeder extends Seeder
         $this->call('ItemSeeder');
         $this->call('CategorySeeder');
         $this->call('ClassificationSeeder');
+        $this->call('BankSeeder');
     }
 }

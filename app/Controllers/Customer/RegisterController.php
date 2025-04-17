@@ -3,16 +3,19 @@
 namespace App\Controllers\Customer;
 
 use App\Controllers\BaseController;
+use App\Libraries\BladeOneLibrary;
 use App\Models\Customer;
 use CodeIgniter\HTTP\ResponseInterface;
 
 class RegisterController extends BaseController
 {
     protected $model;
+    protected $blade;
 
     public function __construct()
     {
         $this->model = new Customer();
+        $this->blade = new BladeOneLibrary();
         $this->helpers = ['form', 'url'];
     }
 
@@ -22,7 +25,8 @@ class RegisterController extends BaseController
             'title' => 'Register | Seri Tutorial CodeIgniter 4: Login dan Register @ qadrlabs.com'
         ];
 
-        return view('customers/auth/register', $data);
+        // return view('customers/auth/register', $data);
+        return $this->blade->render('customers.auth.register', $data);
     }
 
     public function store()

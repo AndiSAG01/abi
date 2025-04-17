@@ -13,7 +13,7 @@ class Customer extends Model
     protected $useSoftDeletes   = false;
     protected $protectFields    = true;
     protected $allowedFields    = [
-        'name','email','password','telphone','image'
+        'name','email','password','telphone','image',
     ];
 
     protected bool $allowEmptyInserts = false;

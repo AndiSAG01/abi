@@ -15,7 +15,7 @@ class Transaction extends Migration
                 'unsigned' => true,
                 'auto_increment' => true,
             ],
-            'customer_id' => [
+            'user_id' => [
                 'type' => 'INT',
                 'constraint' => 11,
                 'unsigned' => true,
@@ -66,7 +66,7 @@ class Transaction extends Migration
         ]);
 
         $this->forge->addKey('id', true);
-        $this->forge->addForeignKey('customer_id', 'customers', 'id', 'CASCADE', 'CASCADE');
+        $this->forge->addForeignKey('user_id', 'users', 'id', 'CASCADE', 'CASCADE');
 
         $this->forge->createTable('transactions');
     }

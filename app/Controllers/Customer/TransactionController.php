@@ -4,15 +4,24 @@ namespace App\Controllers\Customer;
 
 use App\Controllers\BaseController;
 use App\Libraries\BladeOneLibrary;
+use App\Models\Bank;
 use App\Models\Customer;
 use App\Models\Item;
+use App\Models\Payment;
 use App\Models\Transaction;
+use Carbon\Carbon;
+use Myth\Auth\Models\UserModel;
+
 
 class TransactionController extends BaseController
 {
-    protected $transactionsModel;
     protected $blade;
 
+    public function __construct()
+    {
+        // Inisialisasi BladeOneLibrary satu kali di konstruktor
+        $this->blade = new BladeOneLibrary();
+    }
     private function isLoggedIn(): bool
     {
         if (session()->get('logged_in')) {
@@ -22,28 +31,19 @@ class TransactionController extends BaseController
         return false;
     }
 
-    public function __construct()
-    {
-        // Inisialisasi BladeOneLibrary satu kali di konstruktor
-        $this->blade = new BladeOneLibrary();
-    }
     public function index()
     {
-        if (!$this->isLoggedIn()) {
-            return redirect()->to('/logins');
-        }
 
         $transactionModel = new Transaction();
-        $customerModel = new Customer();
+        $customerModel = new UserModel();
         $itemModel = new Item();
 
-        $userId = session()->get('customer_id');
+        $userId = session()->get('logged_in');
         $customer = $customerModel->where('id', $userId)->first();
 
         // Ambil data transaksi dan cart dari model
-        $transactions = $transactionModel->getTransactionsByCustomer($userId);
+        // $transactions = $transactionModel->getTransactionsByCustomer($userId);
         $carts = $transactionModel->getCartByCustomer($userId);
-
         // Hitung total harga tiket dalam cart
         $totalTicketPrice = 0;
         foreach ($carts as $cart) {
@@ -51,23 +51,24 @@ class TransactionController extends BaseController
         }
 
         $data = [
-            'transactions' => $transactions,
+            // 'transactions' => $transactions,
             'items' => $itemModel->findAll(),
             'customers' => $customer,
             'cart' => $carts,
             'totalTicketPrice' => $totalTicketPrice, // Kirim totalTicketPrice ke tampilan
         ];
 
-        return view('customers/transaction/index', $data);
+        // return view('customers.transaction.index', $data);
+        return $this->blade->render('customers.transaction.index', $data);
     }
 
 
 
     public function store()
     {
-        if (!$this->isLoggedIn()) {
-            return redirect()->to('/logins');
-        }
+        // if (!$this->isLoggedIn()) {
+        //     return redirect()->to('/login');
+        // }
 
         $transactionModel = new Transaction();
         $itemModel = new Item();
@@ -87,7 +88,7 @@ class TransactionController extends BaseController
             return redirect()->back()->withInput()->with('error', $validation->getErrors());
         }
 
-        $userId = session()->get('customer_id');
+        $userId = session()->get('logged_in');
 
         // Ambil semua data cart berdasarkan customer_id
         $cartData = $transactionModel->getCartByCustomer($userId);
@@ -159,7 +160,7 @@ class TransactionController extends BaseController
         $db->transStart();
 
         $transactionData = [
-            'customer_id'  => $userId,
+            'user_id'  => $userId,
             'cart_id'      => $cartIdString,
             'item_id'      => !empty($itemsWithQty) ? implode(',', array_keys($itemsWithQty)) : null,
             'qty'          => !empty($itemsWithQty) ? implode(',', array_map('intval', array_values($itemsWithQty))) : '0',
@@ -198,16 +199,85 @@ class TransactionController extends BaseController
 
     function table()
     {
+        // if (!$this->isLoggedIn()) {
+        //     return redirect()->to('/login');
+        // }
+
         $transactionModel = new Transaction();
-        $customerModel = new Customer();
-        $userId = session()->get('customer_id');
+        $customerModel = new UserModel();
+        $userId = session()->get('logged_in');
         $customer = $customerModel->where('id', $userId)->first();
         $transactions = $transactionModel->getTransactionsByCustomer($userId);
 
         $data = [
             'transactions' => $transactions
         ];
-        return view('customers/transaction/table', $data);
-        // return $this->blade->render('customers.transaction.table', $data);
+        return $this->blade->render('customers.transaction.table', $data);
+    }
+
+    public function payment($id)
+    {
+        $transactionModel = new Transaction();
+        $bankModel = new Bank();
+
+        $transaction = $transactionModel->find($id);
+
+        if (!$transaction) {
+            return redirect()->to('/transactions-table')->with('error', 'Transaksi tidak ditemukan.');
+        }
+
+        // Cek apakah sudah ada pembayaran untuk transaksi ini
+        $paymentModel = new Payment();
+        $existingPayment = $paymentModel->where('transaction_id', $id)->first();
+
+        if ($existingPayment) {
+            return redirect()->to('/transactions-table')->with('error', 'Pembayaran untuk transaksi ini sudah dikirim.');
+        }
+
+        $data = [
+            'transaction' => $transaction,
+            'bank' => $bankModel->findAll(),
+        ];
+
+        return $this->blade->render('customers.transaction.payment', $data);
+    }
+
+    public function payment_store()
+    {
+        $paymentModel = new Payment();
+        $transactionModel = new Transaction();
+        $validation = \Config\Services::validation();
+
+        $validation->setRules([
+            'transaction_id'   => 'required|is_unique[payments.transaction_id]',
+            'image'            => 'uploaded[image]|mime_in[image,image/jpg,image/jpeg,image/png]|max_size[image,2048]',
+        ]);
+
+        if (!$validation->withRequest($this->request)->run()) {
+            return redirect()->back()->withInput()->with('error', $validation->getErrors());
+        }
+
+        $image = $this->request->getFile('image');
+        if ($image->isValid() && !$image->hasMoved()) {
+            $newName = $image->getRandomName();
+            $image->move('uploads/payments/', $newName);
+        } else {
+            return redirect()->back()->withInput()->with('error', ['image' => 'Gagal mengunggah gambar.']);
+        }
+
+        $paymentData = [
+            'transaction_id' => $this->request->getPost('transaction_id'),
+            'payment_date'   => Carbon::now()->toDateTimeString(),
+            'image'          => $newName,
+        ];
+
+        $paymentModel->insert($paymentData);
+
+        // Update status transaksi menjadi "Menunggu Konfirmasi"
+        $transactionModel->update($this->request->getPost('transaction_id'), [
+            'status' => 'Menunggu Konfirmasi',
+        ]);
+
+        return redirect()->to('/transactions-table')->with('success', 'Pembayaran berhasil dikirim.');
     }
 }

@@ -8,14 +8,6 @@ use CodeIgniter\HTTP\ResponseInterface;
 
 class CartController extends BaseController
 {
-    private function isLoggedIn(): bool
-    {
-        if (session()->get('logged_in')) {
-            return true;
-        }
-
-        return false;
-    }
 
     protected $cartsModel;
 
@@ -26,20 +18,33 @@ class CartController extends BaseController
 
     public function add_list()
     {
-        $transactionModel = new Cart();
+        
+        $cartModel = new Cart(); // Pastikan kamu punya model Cart
+
+        $userId = session()->get('logged_in');
+        $tourId = $this->request->getPost('tour_id');
+
+        // Cek apakah user login
+        if (!$userId) {
+            return redirect()->back()->with('error', 'Anda harus login terlebih dahulu');
+        }
+        // dd(session()->get());
+        
 
         $data = [
-            'customer_id' => $this->request->getPost('customer_id'),
-            'tour_id' => $this->request->getPost('tour_id'),
-            'amount' => null, // Tambahkan ini biar field amount dikosongkan
+            'user_id' => $userId,
+            'tour_id' => $tourId, 
+            'created_at' => date('Y-m-d H:i:s'),
+            'updated_at' => date('Y-m-d H:i:s'),
         ];
 
-        if ($transactionModel->insert($data)) {
-            return redirect()->to('/transaction')->with('success', 'Tour added to list successfully');
+        if ($cartModel->insert($data)) {
+            return redirect()->to('/transaction')->with('success', 'Tour berhasil ditambahkan ke daftar');
         } else {
-            return redirect()->back()->with('error', 'Failed to add tour');
+            return redirect()->back()->with('error', 'Gagal menambahkan tour');
         }
     }
+
 
     public function delete_list($id)
     {

@@ -3,15 +3,19 @@
 namespace App\Controllers\Customer;
 
 use App\Controllers\BaseController;
+use App\Libraries\BladeOneLibrary;
 use App\Models\Customer;
 use CodeIgniter\HTTP\ResponseInterface;
 
 class LoginController extends BaseController
 {
     protected $model;
+    protected $blade;
 
     public function __construct()
     {
+        $this->blade = new BladeOneLibrary();
+
         $this->model = new Customer();
         $this->helpers = ['form', 'url'];
     }
@@ -29,7 +33,8 @@ class LoginController extends BaseController
             'title' => 'Login | Seri Tutorial CodeIgniter 4: Login dan Register @ qadrlabs.com'
         ];
 
-        return view('customers/auth//login', $data);
+        // return view('customers/auth//login', $data);
+        return $this->blade->render('customers.auth.login', $data);
     }
 
     private function isLoggedIn(): bool

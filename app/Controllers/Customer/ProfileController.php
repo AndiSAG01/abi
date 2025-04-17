@@ -3,88 +3,116 @@
 namespace App\Controllers\Customer;
 
 use App\Controllers\BaseController;
+use App\Libraries\BladeOneLibrary;
 use App\Models\Customer;
+use App\Models\Users;
 use CodeIgniter\HTTP\ResponseInterface;
+use Myth\Auth\Models\UserModel;
 
 class ProfileController extends BaseController
 {
     protected $customerModel;
+    protected $blade;
+
     public function __construct()
     {
-        $this->customerModel = new Customer();
+        $this->customerModel = new UserModel(); // Harus pakai UserModel dari Myth\Auth
+        $this->blade = new BladeOneLibrary();   // Pastikan ini benar
     }
+
     public function index()
     {
-        $customerId = session()->get('customer_id');
+        $customerId = session()->get('logged_in');
+        $role = session()->get('role');
 
         if (!$customerId) {
-            return redirect()->to('/logins')->with('error', 'Silakan login terlebih dahulu');
+            return redirect()->to('login')->with('error', 'Silakan login terlebih dahulu.');
+        }
+
+        if ($role !== 'customer') {
+            return redirect()->to('/')->with('error', 'Akses hanya untuk pelanggan.');
         }
 
         $customer = $this->customerModel->find($customerId);
 
         if (!$customer) {
-            return redirect()->to('/logins')->with('error', 'Akun tidak ditemukan');
+            return redirect()->to('login')->with('error', 'Akun tidak ditemukan.');
         }
 
-        return view('customers/profile', ['customer' => $customer]);
+        return $this->blade->render('customers.profile', ['customer' => $customer]);
     }
+
+
+
     public function update()
     {
-        $customerId = session()->get('customer_id');
+        $customerId = session()->get('logged_in');
 
         if (!$customerId) {
-            return redirect()->to('/logins')->with('error', 'Silakan login terlebih dahulu');
+            return redirect()->to('login')->with('error', 'Silakan login terlebih dahulu');
         }
 
         $customer = $this->customerModel->find($customerId);
 
         if (!$customer) {
-            return redirect()->to('/logins')->with('error', 'Akun tidak ditemukan');
+            return redirect()->to('login')->with('error', 'Akun tidak ditemukan');
         }
 
         $rules = [
-            'name'     => 'required|min_length[3]',
-            'email'    => 'required|valid_email',
-            'password' => 'permit_empty|min_length[6]', // Password opsional, minimal 6 karakter jika diisi
-            'image'    => 'is_image[image]|max_size[image,2048]|mime_in[image,image/png,image/jpeg,image/jpg]',
+            'username' => 'min_length[3]',
+            'email'    => 'valid_email',
+            'password' => 'permit_empty|min_length[6]',
+            'image'    => 'permit_empty|is_image[image]|max_size[image,2048]|mime_in[image,image/png,image/jpeg,image/jpg]',
         ];
 
         if (!$this->validate($rules)) {
             return redirect()->back()->withInput()->with('error', 'Terjadi kesalahan dalam pengisian form');
         }
 
-        $file = $this->request->getFile('image');
+        $updateData = [];
 
-        if ($file->isValid() && !$file->hasMoved()) {
-            $newName = $file->getRandomName();
-            $file->move('uploads/customers/', $newName);
-            if ($customer['image'] && file_exists('uploads/customers/' . $customer['image'])) {
-                unlink('uploads/customers/' . $customer['image']);
-            }
-        } else {
-            $newName = $customer['image'];
+        // Cek perubahan username
+        $newUsername = $this->request->getPost('username');
+        if ($newUsername !== $customer->username) {
+            $updateData['username'] = $newUsername;
         }
 
-        // Periksa apakah password diisi
-        $password = $this->request->getPost('password');
-        $updateData = [
-            'name'  => $this->request->getPost('name'),
-            'email' => $this->request->getPost('email'),
-            'image' => $newName,
-        ];
+        // Cek perubahan email
+        $newEmail = $this->request->getPost('email');
+        if ($newEmail !== $customer->email) {
+            $updateData['email'] = $newEmail;
+        }
 
+        // Cek perubahan password
+        $password = $this->request->getPost('password');
         if (!empty($password)) {
             $updateData['password'] = password_hash($password, PASSWORD_DEFAULT);
         }
 
-        $this->customerModel->update($customerId, $updateData);
+        // Cek upload gambar
+        $file = $this->request->getFile('image');
+        if ($file && $file->isValid() && !$file->hasMoved()) {
+            $newImage = $file->getRandomName();
+            $file->move('uploads/customers/', $newImage);
 
-        // **Perbarui session setelah update**
+            // Hapus gambar lama
+            if (!empty($customer->image) && file_exists('uploads/customers/' . $customer->image)) {
+                unlink('uploads/customers/' . $customer->image);
+            }
+
+            $updateData['image'] = $newImage;
+        }
+
+        // Hanya update jika ada perubahan
+        if (!empty($updateData)) {
+            $this->customerModel->update($customerId, $updateData);
+        }
+
+        // Update session dengan data terbaru
         session()->set([
-            'name'  => $updateData['name'],
-            'email' => $updateData['email'],
-            'image' => $newName,
+            'username' => $updateData['username'] ?? $customer->username,
+            'email'    => $updateData['email'] ?? $customer->email,
+            'image'    => $updateData['image'] ?? $customer->image,
         ]);
 
         return redirect()->back()->with('success', 'Profil berhasil diperbarui');

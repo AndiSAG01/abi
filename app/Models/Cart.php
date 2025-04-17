@@ -13,7 +13,7 @@ class Cart extends Model
     protected $useSoftDeletes   = false;
     protected $protectFields    = true;
     protected $allowedFields    = [
-        'tour_id','customer_id'
+        'tour_id','user_id'
     ];
 
     protected bool $allowEmptyInserts = false;

@@ -2,6 +2,7 @@
 
 namespace App\Controllers\Admin;
 
+use App\Libraries\BladeOneLibrary;
 use App\Models\Category;
 use CodeIgniter\Controller;
 use CodeIgniter\Config\Services;
@@ -9,11 +10,14 @@ use CodeIgniter\I18n\Time;
 
 class CategoryController extends Controller
 {
+
     protected $categoryModel;
     protected $helpers = ['form', 'url'];
+    protected $blade;
 
     public function __construct()
     {
+        $this->blade = new BladeOneLibrary();
         $this->categoryModel = new Category();
     }
 
@@ -23,11 +27,13 @@ class CategoryController extends Controller
 
         $data = [
             'categories' => $this->categoryModel->paginate(5, 'categories'),
-            'pager' => $this->categoryModel->pager
+            'pager' => $this->categoryModel->pager,
+            'user_name' => session()->get('username'),
         ];
-        $data['user_name'] = session()->get('name'); // Ambil nama dari session
+        // Ambil nama dari session
         $data['today'] = Time::now('Asia/Jakarta', 'en')->toLocalizedString('MMM d, yyyy');
-        return view('admins/category/index', $data);
+        // return view('admins/category/index', $data);
+        return $this->blade->render('admins.category.index', $data);
     }
 
     public function store()
@@ -56,9 +62,13 @@ class CategoryController extends Controller
     public function edit($id)
     {
         $data['category'] = $this->categoryModel->find($id);
-        $data['user_name'] = session()->get('name'); // Ambil nama dari session
+        // Ambil nama dari session
+        $data = [
+            'user_name' => session()->get('username'),
+        ];
         $data['today'] = Time::now('Asia/Jakarta', 'en')->toLocalizedString('MMM d, yyyy');
-        return view('admins/category/edit', $data);
+        // return view('admins/category/edit', $data);
+        return $this->blade->render('admins.category.edit', $data);
     }
 
     public function update($id)
