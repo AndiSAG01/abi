@@ -31,7 +31,7 @@
                 </form>
 
                 {{-- Tombol Export PDF --}}
-                <a href="{{ site_url('/Laporan-transaksi/pdf?start_date=' . ($start_date ?? '') . '&end_date=' . ($end_date ?? '')) }}"
+                <a href="{{ site_url('Laporan/transaksi/pdf?start_date=' . ($start_date ?? '') . '&end_date=' . ($end_date ?? '')) }}"
                     class="btn btn-danger text-white mb-2">
                     <i class="fas fa-file-pdf"></i> Export PDF
                 </a>
@@ -92,13 +92,6 @@
                                     </td>
                                 </tr>
                             @endforeach
-
-                            @if (count($transactions) == 0)
-                                <tr>
-                                    <td colspan="8" class="text-center text-muted">Tidak ada data transaksi ditemukan.
-                                    </td>
-                                </tr>
-                            @endif
                         </tbody>
                     </table>
                 </div>

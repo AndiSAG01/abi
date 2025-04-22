@@ -21,7 +21,9 @@ class Transaction extends Model
         'start_date',
         'end_date',
         'total_people',
-        'status'
+        'status',
+        'created_at',
+        'updated_at'
     ];
 
     protected bool $allowEmptyInserts = false;
@@ -122,4 +124,6 @@ class Transaction extends Model
             ->where('transaction_id', $transactionId)
             ->findAll();
     }
+
+    
 }

@@ -78,7 +78,7 @@ $routes->group('', ['filter' => 'login'], function ($routes) {
     $routes->get('laporan/customer/pdf', [ReportController::class, 'customerPdf']);
     #laporan-transaksi
     $routes->get('/Laporan-transaksi', [ReportController::class, 'transaction']);
-    $routes->get('laporan/transaksi/pdf', [ReportController::class, 'transactionPdf']);
+    $routes->get('Laporan/transaksi/pdf', [ReportController::class, 'TransactionPdf']);
     #end-laporan
 
     #bank
@@ -111,6 +111,8 @@ $routes->group('', ['filter' => 'login'], function ($routes) {
     $routes->get('/transactions-table', [TransactionController::class, 'table']);
     $routes->get('transaction-pay/(:num)', [TransactionController::class, 'payment']);
     $routes->post('payment/store', [TransactionController::class, 'payment_store']);
+    $routes->get('/transaction/delete/(:num)', [TransactionController::class, 'deleteTransaction']);
+    $routes->get('unduh-kwitansi/(:num)', [TransactionController::class, 'kwitansiPdf']);
     #end-transaction-tabel
 
     //Auth routes

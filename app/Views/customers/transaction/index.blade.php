@@ -74,7 +74,7 @@
                                                             </ul>
                                                         </td>
                                                         <td class="text-center">
-                                                            <input type="checkbox" name="cart_id[]"
+                                                            <input type="checkbox" name="cart_id[]" 
                                                                 value="<?= esc($item['id']) ?>">
                                                         </td>
                                                         <td class="text-center">

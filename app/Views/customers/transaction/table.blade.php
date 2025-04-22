@@ -10,7 +10,7 @@
                 style="font-family: 'Abril Fatface', cursive;">
                 Tabel Transaksi Tour
             </h3>
-            
+
             <div class="card-body p-4">
                 <div class="table-responsive">
                     <table class="table table-hover table-striped align-middle">
@@ -32,14 +32,18 @@
                                 <tr>
                                     <th scope="row">{{ ++$key }}</th>
                                     <td>
-                                        <div class="d-flex align-items-center">
-                                            <img src="<?= base_url('uploads/tours/' . esc($item['tour_image'])) ?>"
-                                                width="60px" class="rounded me-2" alt="Tour Image">
-                                            <div class="ml-2">
-                                                <strong><?= esc($item['tour_name']) ?></strong>
-                                                <p class="mb-0 text-muted">Lokasi: <?= esc($item['tour_location']) ?></p>
-                                            </div>
-                                        </div>
+                                        <ul class="list-unstyled d-flex flex-column">
+                                            @foreach ($item['tours'] as $tour)
+                                                <li class="d-flex align-items-center mb-2">
+                                                    <img src="{{ base_url('uploads/tours/' . esc($tour['image'])) }}"
+                                                        width="60px" class="rounded me-2" alt="Tour Image">
+                                                    <div>
+                                                        <strong>{{ esc($tour['name']) }}</strong><br>
+                                                        <span class="text-muted">Lokasi: {{ esc($tour['location']) }}</span>
+                                                    </div>
+                                                </li>
+                                            @endforeach
+                                        </ul>
                                     </td>
                                     <td>{{ $item['start_date'] }}</td>
                                     <td>{{ $item['end_date'] }}</td>
@@ -59,8 +63,10 @@
                                     <td>
                                         @if ($item['status'] == 'Pending')
                                             <button class="btn btn-badge btn-danger btn-sm">{{ $item['status'] }}</button>
-                                        @elseif ($item['status'] == 'Menunggu konfirmasi')
+                                        @elseif ($item['status'] == 'Menunggu Konfirmasi')
                                             <button class="btn btn-badge btn-info btn-sm">{{ $item['status'] }}</button>
+                                        @elseif ($item['status'] == 'Sedang Berjalan')
+                                            <button class="btn btn-badge btn-info btn-sm">Konfirmasi Berhasil</button>
                                         @elseif($item['status'] == 'Selesai')
                                             <button class="btn btn-badge btn-success btn-sm">{{ $item['status'] }}</button>
                                         @else
@@ -72,14 +78,19 @@
                                             <div class="d-flex justify-content-center">
                                                 <a href="{{ 'transaction-pay/' . $item['id'] }}"
                                                     class="btn btn-info btn-sm mr-1">Pembayaran</a>
-                                                <form action="" method="POST">
-                                                    @csrf
-                                                    <button type="submit" class="btn btn-danger btn-sm">Batal</button>
-                                                </form>
+                                                <button class="btn btn-danger btn-sm btn-delete"
+                                                    data-id="<?= $item['id'] ?>">
+                                                    Batal
+                                                </button>
                                             </div>
-                                        @elseif ($item['status'] == 'Menunggu konfirmasi')
+                                        @elseif ($item['status'] == 'Menunggu Konfirmasi')
                                             <a href="" class="btn btn-warning btn-sm disabled">Menunggu
                                                 Konfirmasi</a>
+                                        @elseif ($item['status'] == 'Sedang Berjalan')
+                                            <a href="{{ base_url('unduh-kwitansi/' . $item['id']) }}"
+                                                class="btn btn-danger btn-sm">
+                                                <i class="far fa-file-pdf"></i> Unduh Kwitansi
+                                            </a>
                                         @elseif($item['status'] == 'Selesai')
                                             <a href="" class="btn btn-success btn-sm disabled">Selesai</a>
                                         @else
@@ -95,4 +106,31 @@
         </div>
 
     </section>
+
+    <script src="/admin/vendors/sweetalert/sweetalert2.all.min.js"></script>
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            document.querySelectorAll(".btn-delete").forEach(function(button) {
+                button.addEventListener("click", function() {
+                    let categoryId = this.getAttribute("data-id");
+
+                    Swal.fire({
+                        title: "Apakah Anda yakin?",
+                        text: "Data akan dihapus secara permanen!",
+                        icon: "warning",
+                        showCancelButton: true,
+                        confirmButtonColor: "#3085d6",
+                        cancelButtonColor: "#d33",
+                        confirmButtonText: "Ya, Batalkan!",
+                        cancelButtonText: "Keluar"
+                    }).then((result) => {
+                        if (result.isConfirmed) {
+                            window.location.href =
+                                "<?= base_url('/transaction/delete/') ?>" + categoryId;
+                        }
+                    });
+                });
+            });
+        });
+    </script>
 @endsection

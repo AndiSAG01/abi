@@ -5,11 +5,16 @@ namespace App\Controllers\Customer;
 use App\Controllers\BaseController;
 use App\Libraries\BladeOneLibrary;
 use App\Models\Bank;
+use App\Models\Cart;
 use App\Models\Customer;
 use App\Models\Item;
 use App\Models\Payment;
+use App\Models\Tour;
 use App\Models\Transaction;
+use App\Models\Users;
 use Carbon\Carbon;
+use CodeIgniter\I18n\Time;
+use Dompdf\Dompdf;
 use Myth\Auth\Models\UserModel;
 
 
@@ -66,10 +71,6 @@ class TransactionController extends BaseController
 
     public function store()
     {
-        // if (!$this->isLoggedIn()) {
-        //     return redirect()->to('/login');
-        // }
-
         $transactionModel = new Transaction();
         $itemModel = new Item();
         $validation = \Config\Services::validation();
@@ -97,14 +98,27 @@ class TransactionController extends BaseController
             return redirect()->back()->with('error', 'Data cart tidak ditemukan.');
         }
 
-        // Ambil cart_id dan total harga tiket
-        $cartIds = [];
-        $totalTicketPrice = 0;
-        foreach ($cartData as $cart) {
-            $cartIds[] = $cart['id'];
-            $totalTicketPrice += (int) ($cart['tour_ticket'] ?? 0);
+        // Ambil cart_id dan total harga tiket hanya untuk yang dicentang
+        $cartIds = $this->request->getPost('cart_id') ?? [];  // Ambil ID cart yang dipilih
+        if (empty($cartIds)) {
+            return redirect()->back()->with('error', 'Tidak ada cart yang dipilih.');
         }
-        $cartIdString = implode(',', $cartIds);
+
+        $totalTicketPrice = 0;
+        $selectedCarts = [];
+
+        // Filter cart data berdasarkan cart yang dipilih
+        foreach ($cartData as $cart) {
+            if (in_array($cart['id'], $cartIds)) {
+                $selectedCarts[] = $cart;  // Menambahkan cart yang dipilih
+                $totalTicketPrice += (int) ($cart['tour_ticket'] ?? 0);  // Menambahkan harga tiket dari cart yang dipilih
+            }
+        }
+
+        // Cek apakah ada cart yang dipilih
+        if (empty($selectedCarts)) {
+            return redirect()->back()->with('error', 'Tidak ada cart yang valid yang dipilih.');
+        }
 
         // Ambil data item_id dan qty dari form
         $itemIds = $this->request->getPost('item_id') ?? [];
@@ -159,6 +173,8 @@ class TransactionController extends BaseController
         $db = \Config\Database::connect();
         $db->transStart();
 
+        $cartIdString = implode(',', array_map('intval', $cartIds));  // Cart ID yang dipilih
+
         $transactionData = [
             'user_id'  => $userId,
             'cart_id'      => $cartIdString,
@@ -168,7 +184,8 @@ class TransactionController extends BaseController
             'start_date'   => $startDate,
             'end_date'     => $endDate,
             'total_people' => $totalPeople,
-            'status'       => 'Pending'
+            'status'       => 'Pending',
+            'created_at' => Time::now()
         ];
 
         $transactionModel->insert($transactionData);
@@ -188,6 +205,8 @@ class TransactionController extends BaseController
     }
 
 
+
+
     public function getBookingDates()
     {
         $transactionModel = new Transaction();
@@ -197,23 +216,43 @@ class TransactionController extends BaseController
     }
 
 
-    function table()
+    public function table()
     {
-        // if (!$this->isLoggedIn()) {
-        //     return redirect()->to('/login');
-        // }
-
         $transactionModel = new Transaction();
         $customerModel = new UserModel();
+        $cartModel = new Cart();
+        $tourModel = new Tour();
+
         $userId = session()->get('logged_in');
-        $customer = $customerModel->where('id', $userId)->first();
         $transactions = $transactionModel->getTransactionsByCustomer($userId);
+
+        foreach ($transactions as &$transaction) {
+            $cartIds = explode(',', $transaction['cart_id']);
+            $tours = [];
+
+            foreach ($cartIds as $cartId) {
+                $cart = $cartModel->find($cartId);
+                if ($cart) {
+                    $tour = $tourModel->find($cart['tour_id']);
+                    if ($tour) {
+                        $tours[] = [
+                            'name'     => $tour['name'],
+                            'location' => $tour['location'],
+                            'image'    => $tour['image']
+                        ];
+                    }
+                }
+            }
+
+            $transaction['tours'] = $tours;
+        }
 
         $data = [
             'transactions' => $transactions
         ];
         return $this->blade->render('customers.transaction.table', $data);
     }
+
 
     public function payment($id)
     {
@@ -279,5 +318,110 @@ class TransactionController extends BaseController
         ]);
 
         return redirect()->to('/transactions-table')->with('success', 'Pembayaran berhasil dikirim.');
+    }
+
+    public function deleteTransaction($id)
+    {
+        $transactionModel = new Transaction();
+
+        $transaction = $transactionModel->find($id);
+        if (!$transaction) {
+            return redirect()->back()->with('error', 'Transaksi tidak ditemukan.');
+        }
+
+        $transactionModel->delete($id);
+
+        return redirect()->back()->with('success', 'Transaksi berhasil dibatalkan.');
+    }
+
+
+    public function kwitansiPdf($id)
+    {
+        $transactionModel = new Transaction();
+        $cartModel = new Cart();
+        $tourModel = new Tour();
+        $paymentModel = new Payment();
+        $customerModel = new Users();
+        $itemModel = new Item();
+
+        // Ambil data transaksi
+        $transaction = $transactionModel->find($id);
+        if (!$transaction) {
+            throw new \CodeIgniter\Exceptions\PageNotFoundException('Transaction not found');
+        }
+
+        // Buat kode transaksi jika belum ada
+        $transactionCode = $this->generateTransactionCode($id, $transaction['user_id']);
+
+        // Ambil data pembayaran
+        $payment = $paymentModel->where('transaction_id', $id)->first();
+
+        // Ambil data customer
+        $customer = $customerModel->find($transaction['user_id']);
+        if (!$customer) {
+            throw new \CodeIgniter\Exceptions\PageNotFoundException('Customer not found');
+        }
+
+        // Ambil ID cart yang terkait
+        $cartIds = explode(',', $transaction['cart_id']);
+
+        // Inisialisasi data tur yang digabung
+        $mergedTour = [
+            'name' => '',
+            'price' => 0,
+            'quantity' => 0,
+            'subtotal' => 0,
+            'items' => []
+        ];
+
+        foreach ($cartIds as $cartId) {
+            $cart = $cartModel->find($cartId);
+            if ($cart) {
+                $tour = $tourModel->find($cart['tour_id']);
+                if ($tour) {
+                    $qty = $cart['qty'] ?? 1;
+                    $price = $tour['ticket'];
+
+                    $mergedTour['name'] .= ($mergedTour['name'] ? ', ' : '') . $tour['name'];
+                    $mergedTour['price'] += $price;
+                    $mergedTour['quantity'] += $qty;
+                    $mergedTour['subtotal'] += $price * $qty;
+                }
+            }
+        }
+
+
+        // Siapkan data untuk PDF
+        $tours = [$mergedTour];
+        $data = [
+            'title_pdf' => 'Kwitansi Pembayaran',
+            'transaction' => $transaction,
+            'tours' => $tours,
+            'payment' => $payment,
+            'customer' => $customer,
+            'transaction_code' => $transactionCode,
+        ];
+
+        // Buat dan tampilkan PDF
+        $dompdf = new Dompdf();
+        $html = $this->blade->render('customers.transaction.kwitansi', $data);
+        $dompdf->loadHtml($html);
+        $dompdf->setPaper('A4', 'landscape');
+        $dompdf->render();
+
+        return $dompdf->stream('Kwitansi_Transaksi_' . $transactionCode . '.pdf', ["Attachment" => false]);
+    }
+
+    /**
+     * Generate a unique transaction code based on the transaction ID and user ID
+     *
+     * @param int $transactionId
+     * @param int $userId
+     * @return string
+     */
+    private function generateTransactionCode($transactionId, $userId)
+    {
+        // Generate a unique transaction code using the transaction ID, user ID, and current timestamp
+        return 'KST-' . strtoupper(substr(md5($transactionId . $userId . time()), 0, 8));  // Unique code
     }
 }

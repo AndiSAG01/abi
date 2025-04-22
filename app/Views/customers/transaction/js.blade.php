@@ -215,37 +215,72 @@
 <!-- subtotal -->
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script>
-    $(document).ready(function() {
-        function updateSubtotal() {
-            let totalTicketPrice = <?= $totalTicketPrice ?>; // Harga tiket per orang
-            let totalPeople = parseInt($('#total_people').val()) || 0;
-            let totalItemPrice = 0;
+    document.addEventListener("DOMContentLoaded", function () {
+        const tourCheckboxes = document.querySelectorAll('input[name="cart_id[]"]');
+        const itemCheckboxes = document.querySelectorAll('.item-checkbox');
+        const itemQtyInputs = document.querySelectorAll('.item-qty');
+        const totalPeopleInput = document.querySelector('input[name="total_people"]');
+        const subtotalDisplay = document.getElementById('subtotal');
 
-            // Hitung total harga item berdasarkan qty
-            $('.item-checkbox:checked').each(function() {
-                let itemPrice = parseInt($(this).data('price')) || 0;
-                let qty = parseInt($(this).closest('.form-check').find('input[name="qty[]"]').val()) ||
-                    1;
-                totalItemPrice += itemPrice * qty;
-            });
-
-            // Hitung total amount
-            let amount = (totalTicketPrice * totalPeople) + totalItemPrice;
-
-            // Tampilkan hasilnya
-            $('#subtotal').text('Rp ' + amount.toLocaleString('id-ID'));
+        function getTotalPeople() {
+            return parseInt(totalPeopleInput.value) || 0;
         }
 
-        // Event listener untuk jumlah orang, checkbox item, dan qty
-        $('#total_people, .item-checkbox, input[name="qty[]"]').on('input change', updateSubtotal);
+        function calculateSubtotal() {
+            let total = 0;
 
-        // Event listener untuk qty agar perubahan diperhitungkan
-        $(document).on('input', 'input[name="qty[]"]', updateSubtotal);
+            // Hitung total dari tour (jika dipilih)
+            tourCheckboxes.forEach(checkbox => {
+                if (checkbox.checked) {
+                    const row = checkbox.closest('tr');
+                    const priceText = row.querySelector('td:nth-child(3)').textContent;
+                    const price = parseInt(priceText.replace(/[^\d]/g, '')) || 0;
+                    const jumlahPeserta = getTotalPeople();
+                    total += price * jumlahPeserta;
+                }
+            });
 
-        // Jalankan fungsi pertama kali untuk menampilkan harga awal
-        updateSubtotal();
+            // Hitung total dari item tambahan
+            itemCheckboxes.forEach((checkbox, index) => {
+                if (checkbox.checked) {
+                    const price = parseInt(checkbox.dataset.price);
+                    const qtyInput = checkbox.closest('.form-check').querySelector('.item-qty');
+                    const qty = parseInt(qtyInput.value) || 1;
+                    total += price * qty;
+                }
+            });
+
+            subtotalDisplay.textContent = 'Rp ' + total.toLocaleString('id-ID');
+        }
+
+        // Aktifkan qty input hanya jika checkbox dipilih
+        itemCheckboxes.forEach(checkbox => {
+            checkbox.addEventListener('change', function () {
+                const qtyInput = this.closest('.form-check').querySelector('.item-qty');
+                qtyInput.disabled = !this.checked;
+                if (!this.checked) qtyInput.value = 1;
+                calculateSubtotal();
+            });
+        });
+
+        // Perubahan jumlah peserta
+        totalPeopleInput.addEventListener('input', calculateSubtotal);
+
+        // Perubahan qty item
+        itemQtyInputs.forEach(input => {
+            input.addEventListener('input', calculateSubtotal);
+        });
+
+        // Perubahan pilihan tour
+        tourCheckboxes.forEach(checkbox => {
+            checkbox.addEventListener('change', calculateSubtotal);
+        });
+
+        // Hitung saat load jika ada yang dipilih
+        calculateSubtotal();
     });
 </script>
+
 <!-- end-subtotal -->
 
 <!-- atur-tanggal -->
