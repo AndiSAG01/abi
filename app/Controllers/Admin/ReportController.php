@@ -37,12 +37,12 @@ class ReportController extends BaseController
 
     public function customerPdf()
     {
-        $customerModel = new Customer();
+        $customerModel = new Users();
         $dompdf = new Dompdf();
 
         $data = [
             'title_pdf' => 'Laporan Data Customer',
-            'customer' => $customerModel->findAll(),
+            'customer' => $customerModel->where('role','customer')->findAll(),
             'user_name' => session()->get('nameusername'),
             'today' => Time::now('Asia/Jakarta', 'en')->toLocalizedString('MMM d, yyyy'),
         ];

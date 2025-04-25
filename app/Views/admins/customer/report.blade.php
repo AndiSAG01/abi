@@ -7,7 +7,7 @@
                 <h3 style="font-family: Abril Fatface, serif;">Laporan Data Pelanggan</h3>
             </div>
             <div class="card-body">
-                <a href="{{  site_url('laporan/customer/pdf') }}" class="btn btn-danger text-white">
+                <a href="{{  site_url('Laporan/customer/pdf') }}" class="btn btn-danger text-white">
                     <i class="fas fa-file-pdf"></i> Export PDF
                 </a>            
                 <div class="table-responsive">

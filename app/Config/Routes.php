@@ -75,7 +75,7 @@ $routes->group('', ['filter' => 'login'], function ($routes) {
     #laporan
     #laporan customer
     $routes->get('/Laporan-pelanggan', [ReportController::class, 'customer']);
-    $routes->get('laporan/customer/pdf', [ReportController::class, 'customerPdf']);
+    $routes->get('Laporan/customer/pdf', [ReportController::class, 'customerPdf']);
     #laporan-transaksi
     $routes->get('/Laporan-transaksi', [ReportController::class, 'transaction']);
     $routes->get('Laporan/transaksi/pdf', [ReportController::class, 'TransactionPdf']);

@@ -15,13 +15,13 @@
                                     required>
                             </div>
 
-                            <div class="form-group">
-                                <label for="my-input">Status</label>
-                                <select name="status" class="form-control rounded" required>
-                                    <option value="aktif">Aktif</option>
-                                    <option value="nonaktif">NonAktif</option>
-                                </select>
-                            </div>
+                                <div class="form-group">
+                                    <label for="my-input">Status</label>
+                                    <select name="status" class="form-control rounded" required>
+                                        <option value="aktif">Aktif</option>
+                                        <option value="nonaktif">NonAktif</option>
+                                    </select>
+                                </div>
 
                             <div class="form-group">
                                 <label for="classification">Klasifikasi</label>

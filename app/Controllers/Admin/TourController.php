@@ -153,8 +153,9 @@ class TourController extends BaseController
         helper(['form', 'url']);
 
         $tourModel = new Tour();
+        $validationService = \Config\Services::validation();
 
-        $validation = $this->validate([
+        $rules = [
             'name' => 'required',
             'classification' => 'required',
             'category' => 'required',
@@ -162,13 +163,14 @@ class TourController extends BaseController
             'ticket' => 'required|numeric',
             'information' => 'required',
             'information_detail' => 'required',
-            'status' => 'required|in_list[aktif,nonaktif]', // Validasi status
-            'image' => 'max_size[image,2048]|is_image[image]|mime_in[image,image/jpg,image/jpeg,image/png]'
-        ]);
+            'status' => 'required|in_list[aktif,nonaktif]',
+            'image' => 'permit_empty|max_size[image,2048]|is_image[image]|mime_in[image,image/jpg,image/jpeg,image/png]'
+        ];
 
-        if (!$validation) {
-            return redirect()->back()->withInput()->with('error', 'Data tidak valid!');
+        if (!$this->validate($rules)) {
+            return redirect()->back()->withInput()->with('errors', $validationService->getErrors());
         }
+
 
         // Ambil data lama
         $tour = $tourModel->find($id);

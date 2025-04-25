@@ -8,6 +8,7 @@ class ClassificationSeeder extends Seeder
 {
     public function run()
     {
+        
         $data = [
             [
                 'name' => 'Edukasi',

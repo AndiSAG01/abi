@@ -15,7 +15,7 @@ class ClassificationController extends BaseController
     protected $helpers = ['form', 'url'];
     protected $blade;
 
-    
+
     public function __construct()
     {
         $this->blade = new BladeOneLibrary();
@@ -27,7 +27,7 @@ class ClassificationController extends BaseController
         $pager = Services::pager();
 
         $data = [
-            'classifications' => $this->classificationModel->paginate(5, 'classifications'),
+            'classifications' => $this->classificationModel->findAll(),
             'pager' => $this->classificationModel->pager
         ];
         $data['user_name'] = session()->get('username');
@@ -39,26 +39,24 @@ class ClassificationController extends BaseController
 
     public function store()
     {
-        $validate = $this->validate([
-            'name' => [
-                'rules' => 'required|is_unique[classifications.name]',
-                'errors' => [
-                    'required' => 'Nama Klasifikasi harus diisi',
-                    'is_unique' => 'Nama Klasifikasi sudah ada'
-                ]
-            ]
-        ]);
+        $validation = \Config\Services::validation();
 
-        if (!$validate) {
-            return redirect()->back()->withInput()->with('error', 'Data yang kamu masukkan tidak valid');
+        $rules = [
+            'name' => 'required'
+        ];
+
+        if (!$this->validate($rules)) {
+            return redirect()->back()->withInput()->with('errors', $validation->getErrors());
         }
 
-        $this->classificationModel->save([
+        $klasifikasiModel = new Classification();
+        $klasifikasiModel->save([
             'name' => $this->request->getPost('name')
         ]);
 
-        return redirect()->to(base_url('admins/klasifikasi'))->with('success', 'Data Berhasil Ditambahkan');
+        return redirect()->to('/admins/klasifikasi')->with('success', 'Data berhasil disimpan');
     }
+
 
     public function edit($id)
     {

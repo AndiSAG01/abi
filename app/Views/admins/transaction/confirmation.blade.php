@@ -27,14 +27,18 @@
                                 <tr>
                                     <th scope="row">{{ ++$key }}</th>
                                     <td>
-                                        <div class="d-flex align-items-center">
-                                            <img src="<?= base_url('uploads/tours/' . esc($item['tour_image'])) ?>"
-                                                width="60px" class="rounded me-2" alt="Tour Image">
-                                            <div class="ml-2">
-                                                <strong><?= esc($item['tour_name']) ?></strong>
-                                                <p class="mb-0 text-muted">Lokasi: <?= esc($item['tour_location']) ?></p>
-                                            </div>
-                                        </div>
+                                        <ul class="list-unstyled d-flex flex-column">
+                                            @foreach ($item['tours'] as $tour)
+                                                <li class="d-flex align-items-center mb-2">
+                                                    <img src="{{ base_url('uploads/tours/' . esc($tour['image'])) }}"
+                                                        width="60px" class="rounded me-2" alt="Tour Image">
+                                                    <div>
+                                                        <strong>{{ esc($tour['name']) }}</strong><br>
+                                                        <span class="text-muted">Lokasi: {{ esc($tour['location']) }}</span>
+                                                    </div>
+                                                </li>
+                                            @endforeach
+                                        </ul>
                                     </td>
                                     <td>{{ $item['start_date'] }}</td>
                                     <td>{{ $item['end_date'] }}</td>

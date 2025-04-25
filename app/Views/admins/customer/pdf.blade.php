@@ -78,7 +78,7 @@
             <?php foreach ($customer as $key => $item) : ?>
                 <tr>
                     <td><?= ++$key; ?></td>
-                    <td><?= $item['name']; ?></td>
+                    <td><?= $item['username']; ?></td>
                     <td><?= $item['email']; ?></td>
                     <td><?= $item['telphone']; ?></td>
                 </tr>
