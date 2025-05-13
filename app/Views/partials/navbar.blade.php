@@ -10,20 +10,20 @@
         <div class="collapse navbar-collapse" id="ftco-nav">
             <ul class="navbar-nav ml-auto">
                 <li class="nav-item">
-                    <a href="/" class="nav-link <?= $_SERVER['REQUEST_URI'] == '/' ? 'active' : '' ?>">Beranda</a>
+                    <a href="/" class="nav-link <?= $_SERVER['REQUEST_URI'] == '/' ? 'active' : '' ?>" style="font-size: 20px">Beranda</a>
                 </li>
                 <li class="nav-item">
                     <a href="/about"
-                        class="nav-link <?= $_SERVER['REQUEST_URI'] == '/about' ? 'active' : '' ?>">Tentang Kami</a>
+                        class="nav-link <?= $_SERVER['REQUEST_URI'] == '/about' ? 'active' : '' ?>" style="font-size: 20px">Tentang Kami</a>
                 </li>
                 <li class="nav-item">
                     <a href="/destination"
-                        class="nav-link <?= $_SERVER['REQUEST_URI'] == '/destination' ? 'active' : '' ?>">Destinasi</a>
+                        class="nav-link <?= $_SERVER['REQUEST_URI'] == '/destination' ? 'active' : '' ?>" style="font-size: 20px">Destinasi</a>
                 </li>
                 @if (session()->get('logged_in'))
                     <li class="nav-item dropdown">
                         <a class="nav-link dropdown-toggle d-flex align-items-center" href="#"
-                            id="profileDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            id="profileDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false" style="font-size: 20px">
                             Transaksi
                         </a>
                         <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="profileDropdown">
@@ -38,9 +38,9 @@
                 @endif
 
                 <?php if (session()->get('logged_in')): ?>
-                <li class="nav-item dropdown">
+                <li class="nav-item dropdown" >
                     <a class="nav-link dropdown-toggle d-flex align-items-center" href="#" id="profileDropdown"
-                        role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                        role="button" data-bs-toggle="dropdown" aria-expanded="false" style="font-size: 20px">
                         <img src="<?= base_url('uploads/customers/' . session()->get('image')) ?>" alt="Profile Picture"
                             class="rounded-circle" width="40" height="40"
                             style="object-fit: cover; margin-right: 10px;">

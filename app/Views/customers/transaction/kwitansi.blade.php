@@ -90,7 +90,7 @@
         <tr>
             <td><strong>DIBERIKAN KEPADA</strong><br><?= esc($customer['username']) ?></td>
             <td style="text-align: right;">
-                <strong>Invoice #</strong> <?= esc($transaction_code) ?><br>
+                <strong>Invoice #</strong> <?= esc($transaction['invoice']) ?><br>
                 <strong>Tanggal</strong> <?= date('d M Y', strtotime($transaction['created_at'])) ?>
             </td>
         </tr>
@@ -129,24 +129,31 @@
     <table class="no-border" style="margin-top: 10px;">
         <tr>
             <td style="text-align: right;">Subtotal</td>
-            <td style="text-align: right; width: 200px;">Rp<?= number_format($transaction['amount'], 0, ',', '.') ?></td>
+            <td style="text-align: right; width: 200px;">Rp<?= number_format($transaction['amount'], 0, ',', '.') ?>
+            </td>
         </tr>
         <tr>
             <td style="text-align: right;">Total</td>
             <td style="text-align: right;">Rp<?= number_format($transaction['amount'], 0, ',', '.') ?></td>
         </tr>
         <tr>
-            <td style="text-align: right;">Lunas pada <?= date('d M Y', strtotime($payment['payment_date'])) ?></td>
-            <td style="text-align: right;">Rp<?= number_format($transaction['amount'], 0, ',', '.') ?></td>
+            <td style="text-align: right;">Dp pada <?= date('d M Y', strtotime($payment['payment_date'])) ?></td>
+            <td style="text-align: right;">Rp<?= number_format($payment['nominal'], 0, ',', '.') ?></td>
         </tr>
         <tr class="total-box">
             <td style="text-align: right;">Jumlah yang Harus Dibayar</td>
             <td style="text-align: right; color: green;">
-                Rp<?= number_format( $transaction['amount'], 0, ',', '.') ?></td>
+                Rp<?= number_format($transaction['amount'] - $payment['nominal'], 0, ',', '.') ?></td>
         </tr>
     </table>
 
-    <p class="paid">Lunas</p>
+    <p class="paid">
+        @if ($payment['status'] == 'Lunas')
+            Lunas
+        @else
+            Belum Lunas
+        @endif
+    </p>
 
 </body>
 

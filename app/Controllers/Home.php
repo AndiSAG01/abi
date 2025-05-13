@@ -2,10 +2,9 @@
 
 namespace App\Controllers;
 
-use App\Models\Customer;
 use App\Models\Tour;
 use App\Libraries\BladeOneLibrary;
-
+use App\Models\Users;
 
 class Home extends BaseController
 {
@@ -19,10 +18,10 @@ class Home extends BaseController
     public function index()
     {
         $tourModel = new Tour(); // Pastikan nama model sesuai
-        $customerModel = new Customer(); // Pastikan nama model sesuai
+        $customerModel = new Users(); // Pastikan nama model sesuai
 
         // Ambil data customer yang sedang login (contoh: berdasarkan session)
-        $customerId = session()->get('customer_id'); // Sesuaikan dengan key session yang Anda gunakan
+        $customerId = session()->get('logged_in'); // Sesuaikan dengan key session yang Anda gunakan
         $customer = $customerModel->find($customerId); // Ambil data customer berdasarkan ID
 
         $data = [

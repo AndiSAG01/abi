@@ -77,8 +77,8 @@ class TransactionController extends BaseController
 
         $validation->setRules([
             'total_people' => 'required|integer|greater_than[0]',
-            'start_date'   => 'required|valid_date[Y-m-d]',
-            'end_date'     => 'required|valid_date[Y-m-d]|validateDateRange[start_date,end_date]',
+            'start_date'   => 'required',
+            'end_date'     => 'required|validateDateRange[start_date,end_date]',
         ], [
             'end_date' => [
                 'validateDateRange' => 'Tanggal Kepulangan tidak boleh lebih kecil dari tanggal Keberangkatan.',
@@ -91,15 +91,12 @@ class TransactionController extends BaseController
 
         $userId = session()->get('logged_in');
 
-        // Ambil semua data cart berdasarkan customer_id
         $cartData = $transactionModel->getCartByCustomer($userId);
-
         if (empty($cartData)) {
             return redirect()->back()->with('error', 'Data cart tidak ditemukan.');
         }
 
-        // Ambil cart_id dan total harga tiket hanya untuk yang dicentang
-        $cartIds = $this->request->getPost('cart_id') ?? [];  // Ambil ID cart yang dipilih
+        $cartIds = $this->request->getPost('cart_id') ?? [];
         if (empty($cartIds)) {
             return redirect()->back()->with('error', 'Tidak ada cart yang dipilih.');
         }
@@ -107,20 +104,17 @@ class TransactionController extends BaseController
         $totalTicketPrice = 0;
         $selectedCarts = [];
 
-        // Filter cart data berdasarkan cart yang dipilih
         foreach ($cartData as $cart) {
             if (in_array($cart['id'], $cartIds)) {
-                $selectedCarts[] = $cart;  // Menambahkan cart yang dipilih
-                $totalTicketPrice += (int) ($cart['tour_ticket'] ?? 0);  // Menambahkan harga tiket dari cart yang dipilih
+                $selectedCarts[] = $cart;
+                $totalTicketPrice += (int) ($cart['tour_ticket'] ?? 0);
             }
         }
 
-        // Cek apakah ada cart yang dipilih
         if (empty($selectedCarts)) {
             return redirect()->back()->with('error', 'Tidak ada cart yang valid yang dipilih.');
         }
 
-        // Ambil data item_id dan qty dari form
         $itemIds = $this->request->getPost('item_id') ?? [];
         $quantities = $this->request->getPost('qty') ?? [];
 
@@ -128,7 +122,6 @@ class TransactionController extends BaseController
             return redirect()->back()->with('error', 'Kesalahan input. Mohon ulangi.');
         }
 
-        // Persiapkan data item dan validasi stok
         $itemsWithQty = [];
         $totalItemPrice = 0;
 
@@ -139,7 +132,6 @@ class TransactionController extends BaseController
             }
         }
 
-        // Cek stok tersedia
         if (!empty($itemsWithQty)) {
             $items = $itemModel->whereIn('id', array_keys($itemsWithQty))->findAll();
 
@@ -151,46 +143,41 @@ class TransactionController extends BaseController
             }
         }
 
-        // Hitung total amount
         $totalPeople = (int) ($this->request->getPost('total_people') ?? 1);
         $amount = ($totalTicketPrice * $totalPeople) + $totalItemPrice;
 
-        // Ambil start_date dan end_date dari form
         $startDate = $this->request->getPost('start_date');
         $endDate   = $this->request->getPost('end_date');
 
-        // Cek apakah start_date dan end_date sudah ada di database
-        $existingTransaction = $transactionModel
-            ->where('start_date', $startDate)
-            ->where('end_date', $endDate)
-            ->first();
-
-        if ($existingTransaction) {
-            return redirect()->back()->with('error', 'Tanggal yang dipilih sudah ada.');
-        }
-
-        // Simpan data transaksi dalam transaksi database
         $db = \Config\Database::connect();
         $db->transStart();
 
-        $cartIdString = implode(',', array_map('intval', $cartIds));  // Cart ID yang dipilih
+        $cartIdString = implode(',', array_map('intval', $cartIds));
 
         $transactionData = [
-            'user_id'  => $userId,
-            'cart_id'      => $cartIdString,
-            'item_id'      => !empty($itemsWithQty) ? implode(',', array_keys($itemsWithQty)) : null,
-            'qty'          => !empty($itemsWithQty) ? implode(',', array_map('intval', array_values($itemsWithQty))) : '0',
-            'amount'       => $amount,
-            'start_date'   => $startDate,
-            'end_date'     => $endDate,
-            'total_people' => $totalPeople,
-            'status'       => 'Pending',
-            'created_at' => Time::now()
+            'user_id'       => $userId,
+            'cart_id'       => $cartIdString,
+            'item_id'       => !empty($itemsWithQty) ? implode(',', array_keys($itemsWithQty)) : null,
+            'qty'           => !empty($itemsWithQty) ? implode(',', array_map('intval', array_values($itemsWithQty))) : '0',
+            'amount'        => $amount,
+            'start_date'    => $startDate,
+            'end_date'      => $endDate,
+            'total_people'  => $totalPeople,
+            'status'        => 'Pending',
+            'created_at'    => Time::now()
         ];
 
         $transactionModel->insert($transactionData);
+        $transactionId = $transactionModel->getInsertID(); // Dapatkan ID transaksi
 
-        // Update stok item setelah transaksi berhasil
+        // Buat kode invoice
+        $invoiceCode = $this->generateTransactionCode($transactionId, $userId);
+
+        // Simpan kode invoice ke transaksi
+        $transactionModel->update($transactionId, [
+            'invoice' => $invoiceCode
+        ]);
+
         foreach ($itemsWithQty as $itemId => $qty) {
             $itemModel->where('id', $itemId)->decrement('stock', $qty);
         }
@@ -203,6 +190,7 @@ class TransactionController extends BaseController
 
         return redirect()->to('/transactions-table')->with('success', 'Transaksi berhasil ditambahkan dan stok diperbarui.');
     }
+
 
 
 
@@ -222,11 +210,13 @@ class TransactionController extends BaseController
         $customerModel = new UserModel();
         $cartModel = new Cart();
         $tourModel = new Tour();
+        $paymentModel = new Payment(); // Tambahkan model payment
 
         $userId = session()->get('logged_in');
         $transactions = $transactionModel->getTransactionsByCustomer($userId);
 
         foreach ($transactions as &$transaction) {
+            // Ambil data tour
             $cartIds = explode(',', $transaction['cart_id']);
             $tours = [];
 
@@ -243,8 +233,14 @@ class TransactionController extends BaseController
                     }
                 }
             }
-
             $transaction['tours'] = $tours;
+
+            // Ambil data payment berdasarkan transaction_id
+            $payment = $paymentModel
+                ->where('transaction_id', $transaction['id'])
+                ->orderBy('payment_date', 'DESC') // atau 'id' jika tidak punya 'payment_date'
+                ->first();
+            $transaction['payment'] = $payment ?? null;
         }
 
         $data = [
@@ -252,6 +248,7 @@ class TransactionController extends BaseController
         ];
         return $this->blade->render('customers.transaction.table', $data);
     }
+
 
 
     public function payment($id)
@@ -267,15 +264,17 @@ class TransactionController extends BaseController
 
         // Cek apakah sudah ada pembayaran untuk transaksi ini
         $paymentModel = new Payment();
-        $existingPayment = $paymentModel->where('transaction_id', $id)->first();
+        $payments = $paymentModel->where('transaction_id', $transaction['id'])->findAll();
 
-        if ($existingPayment) {
-            return redirect()->to('/transactions-table')->with('error', 'Pembayaran untuk transaksi ini sudah dikirim.');
-        }
-
+        $isFirstPayment = count($payments) == 0;
+        $totalPaid = array_sum(array_column($payments, 'nominal'));
         $data = [
             'transaction' => $transaction,
             'bank' => $bankModel->findAll(),
+            'dp' => $transaction['amount'] * 0.2,
+            'total' => $transaction['amount'],
+            'sisaPembayaran' => $transaction['amount'] - $totalPaid,
+            'isFirstPayment' => $isFirstPayment,
         ];
 
         return $this->blade->render('customers.transaction.payment', $data);
@@ -288,14 +287,16 @@ class TransactionController extends BaseController
         $validation = \Config\Services::validation();
 
         $validation->setRules([
-            'transaction_id'   => 'required|is_unique[payments.transaction_id]',
-            'image'            => 'uploaded[image]|mime_in[image,image/jpg,image/jpeg,image/png]|max_size[image,2048]',
+            'transaction_id' => 'required',
+            'image'          => 'uploaded[image]|mime_in[image,image/jpg,image/jpeg,image/png]|max_size[image,2048]',
+            'nominal'        => 'required|numeric|min_length[1]',
         ]);
 
         if (!$validation->withRequest($this->request)->run()) {
             return redirect()->back()->withInput()->with('error', $validation->getErrors());
         }
 
+        // Proses gambar
         $image = $this->request->getFile('image');
         if ($image->isValid() && !$image->hasMoved()) {
             $newName = $image->getRandomName();
@@ -304,21 +305,56 @@ class TransactionController extends BaseController
             return redirect()->back()->withInput()->with('error', ['image' => 'Gagal mengunggah gambar.']);
         }
 
+        $transactionId = $this->request->getPost('transaction_id');
+        $nominal = (int) $this->request->getPost('nominal');
+
+        // Ambil transaksi
+        $transaction = $transactionModel->find($transactionId);
+        if (!$transaction) {
+            return redirect()->back()->withInput()->with('error', ['transaction_id' => 'Transaksi tidak ditemukan.']);
+        }
+
+        // Ambil pembayaran sebelumnya
+        $existingPayments = $paymentModel->where('transaction_id', $transactionId)->findAll();
+        $totalPaid = array_sum(array_column($existingPayments, 'nominal'));
+
+        $isFirstPayment = count($existingPayments) === 0;
+        $totalTransaction = (int) $transaction['amount'];
+        $dpMinimum = $totalTransaction * 0.2;
+
+        // Cek DP saat pembayaran pertama
+        if ($isFirstPayment && $nominal < $dpMinimum) {
+            return redirect()->back()->with('error', 'Nominal DP Anda kurang dari 20% total pembayaran.');
+        }
+
+        $totalPaid += $nominal; // Tambahkan pembayaran saat ini
+        $statusPayment = $totalPaid >= $totalTransaction ? 'Lunas' : 'Perlu Dicek';
+
+        // Simpan pembayaran
         $paymentData = [
-            'transaction_id' => $this->request->getPost('transaction_id'),
+            'transaction_id' => $transactionId,
             'payment_date'   => Carbon::now()->toDateTimeString(),
             'image'          => $newName,
+            'nominal'        => $nominal,
+            'status'         => $statusPayment,
         ];
-
         $paymentModel->insert($paymentData);
 
-        // Update status transaksi menjadi "Menunggu Konfirmasi"
-        $transactionModel->update($this->request->getPost('transaction_id'), [
-            'status' => 'Menunggu Konfirmasi',
-        ]);
+        // Update status transaksi
+        if ($isFirstPayment) {
+            $statusTransaction = $statusPayment === 'Lunas' ? 'Lunas' : 'Menunggu Konfirmasi';
+            $transactionModel->update($transactionId, [
+                'status' => $statusTransaction,
+            ]);
+        }
 
         return redirect()->to('/transactions-table')->with('success', 'Pembayaran berhasil dikirim.');
     }
+
+
+
+
+
 
     public function deleteTransaction($id)
     {
@@ -350,8 +386,6 @@ class TransactionController extends BaseController
             throw new \CodeIgniter\Exceptions\PageNotFoundException('Transaction not found');
         }
 
-        // Buat kode transaksi jika belum ada
-        $transactionCode = $this->generateTransactionCode($id, $transaction['user_id']);
 
         // Ambil data pembayaran
         $payment = $paymentModel->where('transaction_id', $id)->first();
@@ -399,7 +433,6 @@ class TransactionController extends BaseController
             'tours' => $tours,
             'payment' => $payment,
             'customer' => $customer,
-            'transaction_code' => $transactionCode,
         ];
 
         // Buat dan tampilkan PDF
@@ -409,7 +442,7 @@ class TransactionController extends BaseController
         $dompdf->setPaper('A4', 'landscape');
         $dompdf->render();
 
-        return $dompdf->stream('Kwitansi_Transaksi_' . $transactionCode . '.pdf', ["Attachment" => false]);
+        return $dompdf->stream('Kwitansi_Transaksi_' . $transaction['invoice'] . '.pdf', ["Attachment" => false]);
     }
 
     /**

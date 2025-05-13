@@ -1,36 +1,60 @@
 @extends('layouts.admin')
 
 @section('content')
-<div class="container py-4">
-    <div class="card border-0 shadow-lg rounded-4">
-        <div class="card-header bg-primary text-white rounded-top-4">
-            <h4 class="mb-0"><i class="bi bi-receipt"></i> Detail Pembayaran</h4>
-        </div>
-        <div class="card-body p-4">
-            <div class="row align-items-center">
-                @if ($payments)
-                    <div class="col-md-6 mb-4 mb-md-0 text-center">
-                        <img src="{{ base_url('uploads/payments/' . esc($payments['image'])) }}" 
-                             alt="Bukti Pembayaran" 
-                             class="img-thumbnail shadow-sm rounded-3" 
-                             style="max-width: 100%; height: auto;">
-                    </div>
-                    <div class="col-md-6">
-                        <h5 class="text-muted mb-2"><i class="bi bi-calendar-event"></i> Tanggal Pembayaran</h5>
-                        <p class="fs-5 fw-semibold">{{ $payments['payment_date'] }}</p>
-                        <hr>
-                        
-                    </div>
-                @else
-                    <div class="col-12 text-center py-5">
-                        <i class="bi bi-exclamation-circle display-1 text-warning"></i>
-                        <h3 class="mt-3 text-muted">Pembayaran Belum Ada</h3>
-                        <p class="text-secondary">Silakan upload bukti pembayaran terlebih dahulu.</p>
-                    </div>
-                @endif
+    <div class="container py-4">
+        <div class="card border-0 shadow-lg rounded-4">
+            @if ($payments && $payments['status'] == 'Lunas')
+            @endif
+            <div class="card-body">
+                <h4 class="mb-4 d-flex align-items-center">
+                    <i class="bi bi-clock-history me-2 text-primary"></i> Riwayat Pembayaran
+                </h4>
+
+                <p class="mb-4 text-muted">
+                    Total Pembayaran Diterima: <span class="fw-semibold text-dark">{{ count($allPayments) }} kali</span>
+                </p>
+
+                <div class="table-responsive">
+                    <table class="table table-hover table-bordered align-middle text-center">
+                        <thead class="table-light text-dark">
+                            <tr>
+                                <th>#</th>
+                                <th>Tanggal Pembayaran</th>
+                                <th>Nominal</th>
+                                <th>Status</th>
+                                <th>Bukti Pembayaran</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach ($allPayments as $index => $pay)
+                                <tr>
+                                    <td>{{ $index + 1 }}</td>
+                                    <td>{{ \Carbon\Carbon::parse($pay['payment_date'])->format('d M Y') }}</td>
+                                    <td class="text-success fw-semibold">Rp {{ number_format($pay['nominal']) }}</td>
+                                    <td>
+                                        <span class="badge rounded-pill 
+                                            @if ($pay['status'] === 'Lunas') bg-success 
+                                            @elseif($pay['status'] === 'Belum Lunas') bg-warning text-dark 
+                                            @else bg-secondary @endif">
+                                            {{ $pay['status'] }}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        @if (!empty($pay['image']))
+                                            <a href="{{ base_url('uploads/payments/' . esc($pay['image'])) }}" 
+                                                target="_blank" class="btn btn-sm btn-outline-primary">
+                                                <i class="bi bi-eye-fill"></i> Lihat
+                                            </a>
+                                        @else
+                                            <span class="text-muted">Tidak Ada</span>
+                                        @endif
+                                    </td>
+                                </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
+                </div>
             </div>
         </div>
     </div>
-</div>
-
 @endsection

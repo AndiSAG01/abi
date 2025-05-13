@@ -18,7 +18,8 @@
                                 <th scope="col">Jumlah Peserta</th>
                                 <th scope="col">Item</th>
                                 <th scope="col">Subtotal Pembayaran</th>
-                                <th scope="col">Status</th>
+                                <th scope="col">Status Transaksi</th>
+                                <th scope="col">Status Pembayaran</th>
                                 <th scope="col">Aksi</th>
                             </tr>
                         </thead>
@@ -61,8 +62,12 @@
                                         @elseif ($item['status'] == 'Menunggu konfirmasi')
                                             <button class="btn btn-badge btn-info btn-sm">{{ $item['status'] }}</button>
                                         @else
-                                            <button class="btn btn-badge btn-success btn-sm disabled">{{ $item['status'] }}</button>
+                                            <button
+                                                class="btn btn-badge btn-success btn-sm disabled">{{ $item['status'] }}</button>
                                         @endif
+                                    </td>
+                                    <td>
+                                        <span class="btn btn-badge bg-success btn-sm">Lunas</span>
                                     </td>
                                     <td>
                                         @if ($item['status'] == 'Pending')
@@ -78,7 +83,7 @@
                                             <a href="" class="btn btn-warning btn-sm disabled">Menunggu
                                                 Konfirmasi</a>
                                         @else
-                                        <a href="" class="btn btn-success btn-sm disabled">Selesai</a>
+                                            <a href="" class="btn btn-success btn-sm disabled">Selesai</a>
                                         @endif
                                     </td>
                                 </tr>

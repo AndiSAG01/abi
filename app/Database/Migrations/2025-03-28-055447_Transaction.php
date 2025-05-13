@@ -37,6 +37,11 @@ class Transaction extends Migration
                 'constraint' => '10,2',
                 'null' => true,
             ],
+            'invoice' => [
+                'type' => 'VARCHAR',
+                'constraint' => 50,
+                'null' => true,
+            ],
             'start_date' => [
                 'type' => 'DATE',
                 'null' => true,

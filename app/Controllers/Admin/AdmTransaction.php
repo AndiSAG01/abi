@@ -27,6 +27,8 @@ class AdmTransaction extends BaseController
         $transactionModel = new Transaction();
         $cartModel = new Cart();
         $tourModel = new Tour();
+        $paymentModel = new Payment(); // Tambahkan model payment
+
 
         // Ambil semua transaksi dengan status 'Menunggu Konfirmasi'
         $transactions = $transactionModel
@@ -52,26 +54,28 @@ class AdmTransaction extends BaseController
             ->orderBy('transactions.created_at', 'DESC')
             ->findAll();
 
-            foreach ($transactions as &$transaction) {
-                $cartIds = explode(',', $transaction['cart_id']);
-                $tours = [];
-    
-                foreach ($cartIds as $cartId) {
-                    $cart = $cartModel->find($cartId);
-                    if ($cart) {
-                        $tour = $tourModel->find($cart['tour_id']);
-                        if ($tour) {
-                            $tours[] = [
-                                'name'     => $tour['name'],
-                                'location' => $tour['location'],
-                                'image'    => $tour['image']
-                            ];
-                        }
+        foreach ($transactions as &$transaction) {
+            $cartIds = explode(',', $transaction['cart_id']);
+            $tours = [];
+
+            foreach ($cartIds as $cartId) {
+                $cart = $cartModel->find($cartId);
+                if ($cart) {
+                    $tour = $tourModel->find($cart['tour_id']);
+                    if ($tour) {
+                        $tours[] = [
+                            'name'     => $tour['name'],
+                            'location' => $tour['location'],
+                            'image'    => $tour['image']
+                        ];
                     }
                 }
-    
-                $transaction['tours'] = $tours;
             }
+
+            $transaction['tours'] = $tours;
+            $payment = $paymentModel->where('transaction_id', $transaction['id'])->first();
+            $transaction['payment'] = $payment ?? null;
+        }
         $data = [
             'transactions' => $transactions,
             'user_name' => session()->get('username'),
@@ -83,33 +87,55 @@ class AdmTransaction extends BaseController
 
 
 
-    function check_payment($id)
+    public function check_payment($id)
     {
-        // $session = session();
-        // $customerId = $session->get('logged_in');
         $transactionModel = new Transaction();
         $paymentModel = new Payment();
 
+        // Ambil transaksi
         $transaction = $transactionModel->find($id);
-        $payment = $paymentModel->where('transaction_id', $id)->first();
+
+        // Ambil semua pembayaran terkait transaksi
+        $allPayments = $paymentModel->where('transaction_id', $id)->findAll();
+
+        // Ambil pembayaran terakhir (jika perlu ditampilkan sebagai detail utama)
+        $latestPayment = $paymentModel->where('transaction_id', $id)
+            ->orderBy('payment_date', 'DESC')
+            ->first();
 
         $data = [
-            'payments' => $payment,
+            'payments' => $latestPayment,
+            'allPayments' => $allPayments,
+            'transactions' => $transaction,
             'user_name' => session()->get('username'),
             'today' => Time::now('Asia/Jakarta', 'en')->toLocalizedString('MMM d, yyyy'),
         ];
+
         return $this->blade->render('admins.transaction.check_payment', $data);
     }
+
 
     public function confirmation($id)
     {
         $transactionModel = new Transaction();
+        $paymentModel = new Payment();
 
-        // Cek apakah data transaksi dengan ID tersebut ada
+        // Ambil data transaksi dan pembayaran berdasarkan ID
         $transaction = $transactionModel->find($id);
+        $payment = $paymentModel->where('transaction_id', $id)->first(); // Penting: gunakan `transaction_id`, bukan `id`
 
         if (!$transaction) {
             return redirect()->back()->with('error', 'Transaksi tidak ditemukan.');
+        }
+
+        if (!$payment) {
+            return redirect()->back()->with('error', 'Pembayaran tidak ditemukan.');
+        }
+
+        // Logika konfirmasi berdasarkan jumlah nominal
+        $paymentStatus = 'Belum Lunas';
+        if ($payment['nominal'] == $transaction['amount']) {
+            $paymentStatus = 'Lunas';
         }
 
         // Update status transaksi menjadi "Sedang Berjalan"
@@ -117,14 +143,23 @@ class AdmTransaction extends BaseController
             'status' => 'Sedang Berjalan'
         ]);
 
-        return redirect()->to(base_url('/transaction-admin/Sedang-Dalam-Perjalanan'))->with('success', 'Tour Sedang Menjalani perjalanan');
+        // Update status pembayaran sesuai nominal
+        $paymentModel->update($payment['id'], [ // gunakan id dari tabel payments
+            'status' => $paymentStatus
+        ]);
+
+        return redirect()->to(base_url('/transaction-admin/Sedang-Dalam-Perjalanan'))
+            ->with('success', 'Tour Sedang Menjalani perjalanan');
     }
+
 
     function otw()
     {
         $transactionModel = new Transaction();
         $cartModel = new Cart();
         $tourModel = new Tour();
+        $paymentModel = new Payment(); // Tambahkan model payment
+
 
         // Ambil semua transaksi dengan status 'Menunggu Konfirmasi'
         $transactions = $transactionModel
@@ -150,26 +185,28 @@ class AdmTransaction extends BaseController
             ->orderBy('transactions.created_at', 'DESC')
             ->findAll();
 
-            foreach ($transactions as &$transaction) {
-                $cartIds = explode(',', $transaction['cart_id']);
-                $tours = [];
-    
-                foreach ($cartIds as $cartId) {
-                    $cart = $cartModel->find($cartId);
-                    if ($cart) {
-                        $tour = $tourModel->find($cart['tour_id']);
-                        if ($tour) {
-                            $tours[] = [
-                                'name'     => $tour['name'],
-                                'location' => $tour['location'],
-                                'image'    => $tour['image']
-                            ];
-                        }
+        foreach ($transactions as &$transaction) {
+            $cartIds = explode(',', $transaction['cart_id']);
+            $tours = [];
+
+            foreach ($cartIds as $cartId) {
+                $cart = $cartModel->find($cartId);
+                if ($cart) {
+                    $tour = $tourModel->find($cart['tour_id']);
+                    if ($tour) {
+                        $tours[] = [
+                            'name'     => $tour['name'],
+                            'location' => $tour['location'],
+                            'image'    => $tour['image']
+                        ];
                     }
                 }
-    
-                $transaction['tours'] = $tours;
             }
+
+            $transaction['tours'] = $tours;
+            $payment = $paymentModel->where('transaction_id', $transaction['id'])->first();
+            $transaction['payment'] = $payment ?? null;
+        }
 
         $data = [
             'transactions' => $transactions,
@@ -183,9 +220,11 @@ class AdmTransaction extends BaseController
     public function end($id)
     {
         $transactionModel = new Transaction();
+        $paymentModel = new Payment();
 
         // Cek apakah data transaksi dengan ID tersebut ada
         $transaction = $transactionModel->find($id);
+        $payment = $paymentModel->find($id);
 
         if (!$transaction) {
             return redirect()->back()->with('error', 'Transaksi tidak ditemukan.');
@@ -195,6 +234,9 @@ class AdmTransaction extends BaseController
         $transactionModel->update($id, [
             'status' => 'Selesai'
         ]);
+        $paymentModel->update($id, [
+            'status' => 'Lu nas'
+        ]);
 
         return redirect()->to(base_url('/transaction-admin/Selesai'))->with('success', 'Tour Telah Selesai');
     }
@@ -202,6 +244,7 @@ class AdmTransaction extends BaseController
     function finished()
     {
         $transactionModel = new Transaction();
+        $paymentModel = new Payment();
         $cartModel = new Cart();
         $tourModel = new Tour();
 
@@ -229,26 +272,28 @@ class AdmTransaction extends BaseController
             ->orderBy('transactions.created_at', 'DESC')
             ->findAll();
 
-            foreach ($transactions as &$transaction) {
-                $cartIds = explode(',', $transaction['cart_id']);
-                $tours = [];
-    
-                foreach ($cartIds as $cartId) {
-                    $cart = $cartModel->find($cartId);
-                    if ($cart) {
-                        $tour = $tourModel->find($cart['tour_id']);
-                        if ($tour) {
-                            $tours[] = [
-                                'name'     => $tour['name'],
-                                'location' => $tour['location'],
-                                'image'    => $tour['image']
-                            ];
-                        }
+        foreach ($transactions as &$transaction) {
+            $cartIds = explode(',', $transaction['cart_id']);
+            $tours = [];
+
+            foreach ($cartIds as $cartId) {
+                $cart = $cartModel->find($cartId);
+                if ($cart) {
+                    $tour = $tourModel->find($cart['tour_id']);
+                    if ($tour) {
+                        $tours[] = [
+                            'name'     => $tour['name'],
+                            'location' => $tour['location'],
+                            'image'    => $tour['image']
+                        ];
                     }
                 }
-    
-                $transaction['tours'] = $tours;
             }
+
+            $transaction['tours'] = $tours;
+              $payment = $paymentModel->where('transaction_id', $transaction['id'])->first();
+            $transaction['payment'] = $payment ?? null;
+        }
         $data = [
             'transactions' => $transactions,
             'user_name' => session()->get('username'),
@@ -307,26 +352,26 @@ class AdmTransaction extends BaseController
             ->orderBy('transactions.created_at', 'DESC')
             ->findAll();
 
-            foreach ($transactions as &$transaction) {
-                $cartIds = explode(',', $transaction['cart_id']);
-                $tours = [];
-    
-                foreach ($cartIds as $cartId) {
-                    $cart = $cartModel->find($cartId);
-                    if ($cart) {
-                        $tour = $tourModel->find($cart['tour_id']);
-                        if ($tour) {
-                            $tours[] = [
-                                'name'     => $tour['name'],
-                                'location' => $tour['location'],
-                                'image'    => $tour['image']
-                            ];
-                        }
+        foreach ($transactions as &$transaction) {
+            $cartIds = explode(',', $transaction['cart_id']);
+            $tours = [];
+
+            foreach ($cartIds as $cartId) {
+                $cart = $cartModel->find($cartId);
+                if ($cart) {
+                    $tour = $tourModel->find($cart['tour_id']);
+                    if ($tour) {
+                        $tours[] = [
+                            'name'     => $tour['name'],
+                            'location' => $tour['location'],
+                            'image'    => $tour['image']
+                        ];
                     }
                 }
-    
-                $transaction['tours'] = $tours;
             }
+
+            $transaction['tours'] = $tours;
+        }
         $data = [
             'transactions' => $transactions,
             'user_name' => session()->get('username'),

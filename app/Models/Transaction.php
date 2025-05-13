@@ -21,6 +21,7 @@ class Transaction extends Model
         'start_date',
         'end_date',
         'total_people',
+        'invoice',
         'status',
         'created_at',
         'updated_at'

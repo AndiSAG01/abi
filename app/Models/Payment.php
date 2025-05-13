@@ -15,7 +15,9 @@ class Payment extends Model
     protected $allowedFields    = [
         'transaction_id',
         'payment_date',
-        'image'
+        'image',
+        'status',
+        'nominal'
     ];
 
     protected bool $allowEmptyInserts = false;

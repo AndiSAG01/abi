@@ -16,7 +16,7 @@ class LoginController extends BaseController
     {
         $this->blade = new BladeOneLibrary();
 
-        $this->model = new Customer();
+        // $this->model = new Customer();
         $this->helpers = ['form', 'url'];
     }
 

@@ -23,7 +23,8 @@
                                 <th scope="col">Jumlah Peserta</th>
                                 <th scope="col">Item</th>
                                 <th scope="col">Subtotal Pembayaran</th>
-                                <th scope="col">Status</th>
+                                <th scope="col">Status Transaksi</th> <!-- Sudah ada -->
+                                <th scope="col">Status Pembayaran</th> <!-- Kolom baru -->
                                 <th scope="col">Aksi</th>
                             </tr>
                         </thead>
@@ -74,6 +75,30 @@
                                         @endif
                                     </td>
                                     <td>
+                                        @if (isset($item['payment']))
+                                            @php
+                                                $payment = $item['payment'];
+                                                $status = $payment['status'] ?? 'Perlu Dicek';
+                                            @endphp
+                                            @if ($status == 'Lunas')
+                                                <span class="btn btn-badge bg-success btn-sm">Lunas</span>
+                                            @elseif ($status == 'Belum Lunas')
+                                                <span class="btn btn-badge bg-warning text-white btn-sm">Belum Lunas</span>
+                                            @elseif ($status == 'Perlu Dicek')
+                                                <span class="btn btn-badge bg-info text-white btn-sm">Perlu Dicek</span>
+                                            @elseif ($status == 'Dibatalkan')
+                                                <span class="btn btn-badge bg-danger text-white btn-sm">Dibatalkan</span>
+                                            @else
+                                                <span class="btn btn-badge bg-secondary text-white btn-sm">Status Tidak
+                                                    Dikenal</span>
+                                            @endif
+                                        @else
+                                            <span class="btn btn-badge bg-secondary text-white btn-sm">Belum Bayar</span>
+                                        @endif
+
+                                    </td>
+
+                                    <td>
                                         @if ($item['status'] == 'Pending')
                                             <div class="d-flex justify-content-center">
                                                 <a href="{{ 'transaction-pay/' . $item['id'] }}"
@@ -87,6 +112,7 @@
                                             <a href="" class="btn btn-warning btn-sm disabled">Menunggu
                                                 Konfirmasi</a>
                                         @elseif ($item['status'] == 'Sedang Berjalan')
+                                            <a href="{{ 'transaction-pay/' . $item['id'] }}" class="btn btn-info btn-sm">Pembayaran</a>
                                             <a href="{{ base_url('unduh-kwitansi/' . $item['id']) }}"
                                                 class="btn btn-danger btn-sm">
                                                 <i class="far fa-file-pdf"></i> Unduh Kwitansi
