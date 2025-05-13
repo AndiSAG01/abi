@@ -66,23 +66,26 @@
                                         @endif
                                     </td>
                                     <td>
-                                        @if (isset($item['payment']))
-                                            @php $status = $item['payment']['status']; @endphp
+                                        @php
+                                            $statusPembayaran = $item['payment']['status'] ?? null;
+                                            $statusTransaksi = $item['status'];
+                                        @endphp
 
-                                            @if ($status == 'Lunas')
-                                                <span class="btn btn-badge bg-success btn-sm">Lunas</span>
-                                            @elseif ($status == 'Belum Lunas')
-                                                <span class="btn btn-badge bg-warning text-white btn-sm">Belum Lunas</span>
-                                            @elseif ($status == 'Perlu Dicek')
-                                                <span class="btn btn-badge bg-info text-white btn-sm">Perlu Dicek</span>
-                                            @elseif ($status == 'Dibatalkan')
-                                                <span class="btn btn-badge bg-danger text-white btn-sm">Dibatalkan</span>
-                                            @else
-                                                <span class="btn btn-badge bg-secondary text-white btn-sm">Status Tidak
-                                                    Dikenal</span>
-                                            @endif
+                                        @if ($statusPembayaran)
+                                            @php
+                                                $badgeClass = match ($statusPembayaran) {
+                                                    'Lunas' => 'success',
+                                                    'Belum Lunas' => 'warning',
+                                                    'Perlu Dicek' => 'info',
+                                                    'Dibatalkan' => 'danger',
+                                                    default => 'secondary',
+                                                };
+                                            @endphp
+                                            <span class="btn bg-{{ $badgeClass }}">{{ $statusPembayaran }}</span>
+                                        @elseif ($statusTransaksi == 'Selesai')
+                                            <span class="btn bg-success">Lunas</span>
                                         @else
-                                            <span class="btn btn-badge bg-secondary text-white btn-sm">Belum Bayar</span>
+                                            <span class="btn bg-secondary">Belum Bayar</span>
                                         @endif
                                     </td>
                                     <td>
@@ -100,7 +103,9 @@
                                                 Konfirmasi</a>
                                         @else
                                             <div class="d-flex">
-                                                <a href="{{ site_url('check-payment/' . $item['id']) }}" class="btn btn-badge btn-info btn-sm" style="margin-right: 5px ">Cek Pembayaran</a>
+                                                <a href="{{ site_url('check-payment/' . $item['id']) }}"
+                                                    class="btn btn-badge btn-info btn-sm" style="margin-right: 5px ">Cek
+                                                    Pembayaran</a>
                                                 <form action="{{ site_url('end/' . $item['id']) }}" method="POST">
                                                     <button type="submit" class="btn btn-primary btn-sm"
                                                         style="margin-right: 5px">Selesai</button>

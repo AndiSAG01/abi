@@ -280,14 +280,15 @@ class TransactionController extends BaseController
         return $this->blade->render('customers.transaction.payment', $data);
     }
 
+
     public function payment_store()
     {
-        $paymentModel = new Payment();
+        $paymentModel     = new Payment();
         $transactionModel = new Transaction();
-        $validation = \Config\Services::validation();
+        $validation       = \Config\Services::validation();
 
         $validation->setRules([
-            'transaction_id' => 'required',
+            'transaction_id' => 'required|is_not_unique[transactions.id]',
             'image'          => 'uploaded[image]|mime_in[image,image/jpg,image/jpeg,image/png]|max_size[image,2048]',
             'nominal'        => 'required|numeric|min_length[1]',
         ]);
@@ -296,60 +297,79 @@ class TransactionController extends BaseController
             return redirect()->back()->withInput()->with('error', $validation->getErrors());
         }
 
-        // Proses gambar
+        // Upload file gambar
         $image = $this->request->getFile('image');
-        if ($image->isValid() && !$image->hasMoved()) {
+        if ($image && $image->isValid() && !$image->hasMoved()) {
             $newName = $image->getRandomName();
-            $image->move('uploads/payments/', $newName);
+            $image->move(FCPATH . 'uploads/payments/', $newName);
         } else {
             return redirect()->back()->withInput()->with('error', ['image' => 'Gagal mengunggah gambar.']);
         }
 
+        // Ambil input dan data transaksi
         $transactionId = $this->request->getPost('transaction_id');
-        $nominal = (int) $this->request->getPost('nominal');
+        $nominal       = (int) $this->request->getPost('nominal');
 
-        // Ambil transaksi
         $transaction = $transactionModel->find($transactionId);
         if (!$transaction) {
             return redirect()->back()->withInput()->with('error', ['transaction_id' => 'Transaksi tidak ditemukan.']);
         }
 
-        // Ambil pembayaran sebelumnya
+        // Hitung pembayaran sebelumnya
         $existingPayments = $paymentModel->where('transaction_id', $transactionId)->findAll();
-        $totalPaid = array_sum(array_column($existingPayments, 'nominal'));
+        $totalPaid        = array_sum(array_column($existingPayments, 'nominal'));
+        $isFirstPayment   = count($existingPayments) === 0;
 
-        $isFirstPayment = count($existingPayments) === 0;
         $totalTransaction = (int) $transaction['amount'];
-        $dpMinimum = $totalTransaction * 0.2;
+        $dpMinimum        = $totalTransaction * 0.2;
 
-        // Cek DP saat pembayaran pertama
+        // Validasi pembayaran pertama (DP minimal 20%)
         if ($isFirstPayment && $nominal < $dpMinimum) {
-            return redirect()->back()->with('error', 'Nominal DP Anda kurang dari 20% total pembayaran.');
+            return redirect()->back()->withInput()->with('error', 'Nominal DP Anda kurang dari 20% total pembayaran.');
         }
 
-        $totalPaid += $nominal; // Tambahkan pembayaran saat ini
-        $statusPayment = $totalPaid >= $totalTransaction ? 'Lunas' : 'Perlu Dicek';
+        // Hitung total dibayar setelah ditambah nominal baru
+        $totalPaid += $nominal;
+        $statusPayment = 'Perlu Dicek';
+        if ($totalPaid >= $totalTransaction && !$isFirstPayment) {
+            // Tetap perlu dicek meskipun total sudah mencukupi
+            $statusPayment = 'Perlu Dicek';
+        }
 
-        // Simpan pembayaran
+        // Simpan data pembayaran
         $paymentData = [
             'transaction_id' => $transactionId,
-            'payment_date'   => Carbon::now()->toDateTimeString(),
+            'payment_date'   => Time::now()->toDateTimeString(),
             'image'          => $newName,
             'nominal'        => $nominal,
             'status'         => $statusPayment,
         ];
         $paymentModel->insert($paymentData);
 
-        // Update status transaksi
+        // Tentukan status transaksi
+        $newTransactionStatus = $transaction['status']; // Default tetap
         if ($isFirstPayment) {
-            $statusTransaction = $statusPayment === 'Lunas' ? 'Lunas' : 'Menunggu Konfirmasi';
+            $newTransactionStatus = 'Menunggu Konfirmasi';
+        } elseif (!$isFirstPayment && $statusPayment === 'Perlu Dicek') {
+            $newTransactionStatus = 'Sedang Berjalan';
+        } elseif (!$isFirstPayment && $statusPayment === 'Lunas') {
+            // Jangan langsung selesai kecuali sudah diverifikasi admin
+            $newTransactionStatus = 'Sedang Berjalan';
+        }
+
+
+        // Update status transaksi jika berubah
+        if ($newTransactionStatus !== $transaction['status']) {
             $transactionModel->update($transactionId, [
-                'status' => $statusTransaction,
+                'status' => $newTransactionStatus,
             ]);
         }
 
         return redirect()->to('/transactions-table')->with('success', 'Pembayaran berhasil dikirim.');
     }
+
+
+
 
 
 

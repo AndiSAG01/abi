@@ -204,7 +204,10 @@ class AdmTransaction extends BaseController
             }
 
             $transaction['tours'] = $tours;
-            $payment = $paymentModel->where('transaction_id', $transaction['id'])->first();
+            $payment = $paymentModel
+                ->where('transaction_id', $transaction['id'])
+                ->orderBy('payment_date', 'DESC') // Atau orderBy('id', 'DESC')
+                ->first();
             $transaction['payment'] = $payment ?? null;
         }
 
@@ -234,9 +237,9 @@ class AdmTransaction extends BaseController
         $transactionModel->update($id, [
             'status' => 'Selesai'
         ]);
-        $paymentModel->update($id, [
-            'status' => 'Lu nas'
-        ]);
+        $paymentModel->where('transaction_id', $id)
+            ->set(['status' => 'Lunas'])
+            ->update();
 
         return redirect()->to(base_url('/transaction-admin/Selesai'))->with('success', 'Tour Telah Selesai');
     }
@@ -291,7 +294,7 @@ class AdmTransaction extends BaseController
             }
 
             $transaction['tours'] = $tours;
-              $payment = $paymentModel->where('transaction_id', $transaction['id'])->first();
+            $payment = $paymentModel->where('transaction_id', $transaction['id'])->first();
             $transaction['payment'] = $payment ?? null;
         }
         $data = [
