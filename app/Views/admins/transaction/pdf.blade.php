@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <title>{{ $title_pdf }}</title>
-    
+
     <style>
         body {
             font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
@@ -129,7 +129,7 @@
         <div style="width: 120px;"></div>
     </div>
 
-    <table  id="table">
+    <table id="table">
         <thead>
             <tr>
                 <th>#</th>
@@ -146,12 +146,16 @@
                 <tr>
                     <td class="text-center">{{ ++$key }}</td>
                     <td>
-                        <div class="tour-info">
-                            <div>
-                                <strong>{{ $item['tour_name'] }}</strong><br>
-                                <small>Lokasi: {{ $item['tour_location'] }}</small>
-                            </div>
-                        </div>
+                        <ul class="list-unstyled d-flex flex-column tour-info">
+                            @foreach ($item['tours'] as $tour)
+                                <li class="d-flex align-items-center mb-2">
+                                    <div>
+                                        <strong>{{ esc($tour['name']) }}</strong><br>
+                                        <span class="text-muted">Lokasi: {{ esc($tour['location']) }}</span>
+                                    </div>
+                                </li>
+                            @endforeach
+                        </ul>
                     </td>
                     <td style="white-space: nowrap;" class="text-center">{{ $item['start_date'] }}</td>
                     <td style="white-space: nowrap;" class="text-center">{{ $item['end_date'] }}</td>
@@ -167,7 +171,8 @@
                             @endforeach
                         </ul>
                     </td>
-                    <td class="text-right" style="white-space: nowrap;">Rp. {{ number_format($item['amount'], 0, ',', '.') }}</td>
+                    <td class="text-right" style="white-space: nowrap;">Rp.
+                        {{ number_format($item['amount'], 0, ',', '.') }}</td>
                 </tr>
             @endforeach
         </tbody>

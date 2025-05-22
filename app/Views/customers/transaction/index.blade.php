@@ -74,7 +74,7 @@
                                                             </ul>
                                                         </td>
                                                         <td class="text-center">
-                                                            <input type="checkbox" name="cart_id[]" 
+                                                            <input type="checkbox" name="cart_id[]"
                                                                 value="<?= esc($item['id']) ?>">
                                                         </td>
                                                         <td class="text-center">
@@ -100,33 +100,31 @@
                                     <div class="card-body">
                                         <div class="row">
                                             <div class="col-12 col-md-6">
-                                                <div class="card mb-4">
-                                                    <h5 class="card-header bg-info text-white text-center">Jadwal Tour</h5>
+                                                <div class="card mb-4 bg-light">
+                                                    <h5 class="card-header bg-info text-white text-center">Panduan Pemesanan
+                                                        Tour</h5>
                                                     <div class="card-body">
-                                                        <h2 id="monthYear"></h2>
-                                                        <div id="calendar"></div>
-                                                        <div class="nav-buttons">
-                                                            <button id="prevMonth" class="btn btn-secondary"
-                                                                type="button">Sebelumnya</button>
-                                                            <button id="nextMonth" class="btn btn-secondary"
-                                                                type="button">Selanjutnya</button>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                                <div class="card p-3 bg-light">
-                                                    <div class="card-body text-center">
-                                                        <span class="text-danger font-weight-bold">Note:</span>
-                                                        <p>
-                                                            <span class="mr-3 text-dark"><b>Telah Dibooking</b> <i
-                                                                    class="fas fa-square-full"
-                                                                    style="color: #ccc;"></i></span>
-                                                            <span class="text-dark"><b>Belum Dibooking</b> <i
-                                                                    class="fas fa-square-full"
-                                                                    style="color: #007bff;"></i></span>
-                                                        </p>
+                                                        <ul class="timeline list-unstyled">
+                                                            <li class="mb-3">
+                                                                <span class="badge bg-secondary rounded-pill text-white">1</span>
+                                                                <strong>Pilih Tanggal Keberangkatan</strong><br>
+                                                                Tanggal harus minimal H-1 dari hari ini.
+                                                            </li>
+                                                            <li class="mb-3">
+                                                                <span class="badge bg-secondary rounded-pill text-white">2</span>
+                                                                <strong>Isi Data Pemesan</strong><br>
+                                                                Nama, no HP, dan jumlah peserta.
+                                                            </li>
+                                                            <li>
+                                                                <span class="badge bg-secondary rounded-pill text-white">3</span>
+                                                                <strong>Konfirmasi Pemesanan</strong><br>
+                                                                Kami akan menghubungi Anda segera.
+                                                            </li>
+                                                        </ul>
                                                     </div>
                                                 </div>
                                             </div>
+
                                             <div class="col-12 col-md-6 mt-3 mt-md-0">
                                                 <div class="form-group">
                                                     <label for="nama" class="font-weight-bold">Nama Lengkap</label>
@@ -148,8 +146,7 @@
                                                         value="<?= old('customer_phone', esc($customers->telphone ?? '')) ?>"
                                                         placeholder="Masukkan Nomor Handphone" required>
                                                     <?php if (session('errors.customer_phone')) : ?>
-                                                    <span
-                                                        class="text-danger"><?= session('errors.customer_phone') ?></span>
+                                                    <span class="text-danger"><?= session('errors.customer_phone') ?></span>
                                                     <?php endif; ?>
                                                 </div>
 
@@ -186,7 +183,6 @@
                                                     <span class="text-danger"><?= session('errors.end_date') ?></span>
                                                     <?php endif; ?>
                                                 </div>
-
                                             </div>
                                         </div>
                                     </div>

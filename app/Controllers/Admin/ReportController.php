@@ -5,7 +5,9 @@ namespace App\Controllers\Admin;
 use App\Controllers\BaseController;
 use App\Libraries\BladeOneLibrary;
 use App\Libraries\Pdfgenerator;
+use App\Models\Cart;
 use App\Models\Customer;
+use App\Models\Tour;
 use App\Models\Transaction;
 use App\Models\Users;
 use CodeIgniter\I18n\Time;
@@ -42,7 +44,7 @@ class ReportController extends BaseController
 
         $data = [
             'title_pdf' => 'Laporan Data Customer',
-            'customer' => $customerModel->where('role','customer')->findAll(),
+            'customer' => $customerModel->where('role', 'customer')->findAll(),
             'user_name' => session()->get('nameusername'),
             'today' => Time::now('Asia/Jakarta', 'en')->toLocalizedString('MMM d, yyyy'),
         ];
@@ -59,6 +61,8 @@ class ReportController extends BaseController
     public function transaction()
     {
         $transactionModel = new Transaction();
+        $cartModel = new Cart();
+        $tourModel = new Tour();
 
         $startDate = $this->request->getGet('start_date');
         $endDate = $this->request->getGet('end_date');
@@ -93,21 +97,44 @@ class ReportController extends BaseController
             ->orderBy('transactions.created_at', 'DESC')
             ->findAll();
 
-        $data = [
-            'transactions' => $transactions,
-            'user_name' => session()->get('username'),
-            'today' => Time::now('Asia/Jakarta', 'en')->toLocalizedString('MMM d, yyyy'),
-            'start_date' => $startDate,
-            'end_date' => $endDate,
-        ];
+        foreach ($transactions as &$transaction) {
+            $cartIds = explode(',', $transaction['cart_id']);
+            $tours = [];
 
-        return $this->blade->render('admins.transaction.report', $data);
+            foreach ($cartIds as $cartId) {
+                $cart = $cartModel->find($cartId);
+                if ($cart) {
+                    $tour = $tourModel->find($cart['tour_id']);
+                    if ($tour) {
+                        $tours[] = [
+                            'name'     => $tour['name'],
+                            'location' => $tour['location'],
+                            'image'    => $tour['image']
+                        ];
+                    }
+                }
+            }
+
+            $transaction['tours'] = $tours;
+
+            $data = [
+                'transactions' => $transactions,
+                'user_name' => session()->get('username'),
+                'today' => Time::now('Asia/Jakarta', 'en')->toLocalizedString('MMM d, yyyy'),
+                'start_date' => $startDate,
+                'end_date' => $endDate,
+            ];
+
+            return $this->blade->render('admins.transaction.report', $data);
+        }
     }
 
     public function TransactionPdf()
     {
         $transactionModel = new Transaction();
         $dompdf = new Dompdf();
+        $cartModel = new Cart();
+        $tourModel = new Tour();
 
         $startDate = $this->request->getGet('start_date');
         $endDate = $this->request->getGet('end_date');
@@ -115,14 +142,14 @@ class ReportController extends BaseController
         // Query dasar
         $transactionModel = $transactionModel
             ->select('transactions.*, 
-            users.username AS username, 
-            tour.name AS tour_name, 
-            tour.location AS tour_location, 
-            tour.ticket AS tour_ticket,
-            tour.image AS tour_image,
-            GROUP_CONCAT(DISTINCT classifications.name ORDER BY classifications.name ASC) AS classification_names,
-            GROUP_CONCAT(DISTINCT categories.name ORDER BY categories.name ASC) AS category_names,
-            GROUP_CONCAT(DISTINCT items.name ORDER BY items.name ASC) AS items_names')
+        users.username AS username, 
+        tour.name AS tour_name, 
+        tour.location AS tour_location, 
+        tour.ticket AS tour_ticket,
+        tour.image AS tour_image,
+        GROUP_CONCAT(DISTINCT classifications.name ORDER BY classifications.name ASC) AS classification_names,
+        GROUP_CONCAT(DISTINCT categories.name ORDER BY categories.name ASC) AS category_names,
+        GROUP_CONCAT(DISTINCT items.name ORDER BY items.name ASC) AS items_names')
             ->join('carts', 'carts.id = transactions.cart_id', 'left')
             ->join('users', 'users.id = transactions.user_id', 'left')
             ->join('tour', 'tour.id = carts.tour_id', 'left')
@@ -131,19 +158,42 @@ class ReportController extends BaseController
             ->join('items', 'FIND_IN_SET(items.id, transactions.item_id)', 'left')
             ->where('transactions.status', 'Selesai');
 
-        // Filter tanggal jika tersedia
         if ($startDate && $endDate) {
             $transactionModel = $transactionModel
                 ->where('transactions.start_date >=', $startDate)
                 ->where('transactions.end_date <=', $endDate);
         }
 
-        // Group by agar GROUP_CONCAT tidak duplikat
         $transactionModel = $transactionModel->groupBy('transactions.id');
+
+        // ✅ Ambil data transaksi ke variabel
+        $transactions = $transactionModel->findAll();
+
+        // Tambahkan detail tour berdasarkan cart_id
+        foreach ($transactions as &$transaction) {
+            $cartIds = explode(',', $transaction['cart_id']);
+            $tours = [];
+
+            foreach ($cartIds as $cartId) {
+                $cart = $cartModel->find($cartId);
+                if ($cart) {
+                    $tour = $tourModel->find($cart['tour_id']);
+                    if ($tour) {
+                        $tours[] = [
+                            'name'     => $tour['name'],
+                            'location' => $tour['location'],
+                            'image'    => $tour['image']
+                        ];
+                    }
+                }
+            }
+
+            $transaction['tours'] = $tours;
+        }
 
         $data = [
             'title_pdf' => 'Laporan Data Transaksi',
-            'transactions' => $transactionModel->findAll(),
+            'transactions' => $transactions, // kirim ke view
             'user_name' => session()->get('username'),
             'today' => Time::now('Asia/Jakarta', 'en')->toLocalizedString('MMM d, yyyy'),
             'start_date' => $startDate,
@@ -152,7 +202,6 @@ class ReportController extends BaseController
 
         // Render view menjadi HTML
         $html = $this->blade->render('admins.transaction.pdf', $data);
-
 
         // Load dan generate PDF
         $dompdf->loadHtml($html);

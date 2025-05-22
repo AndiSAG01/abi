@@ -208,7 +208,7 @@ class AdmTransaction extends BaseController
                 ->where('transaction_id', $transaction['id'])
                 ->orderBy('payment_date', 'DESC') // Atau orderBy('id', 'DESC')
                 ->first();
-            $transaction['payment'] = $payment ?? null;
+            $transaction['payment'] = $payment ?? null
         }
 
         $data = [

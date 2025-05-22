@@ -8,15 +8,18 @@ class AddInvoiceToTransaction extends Migration
 {
     public function up()
     {
-        $fields = [
-            'invoice' => [
-                'type' => 'VARCHAR',
-                'constraint' => '50', // Maks 15 digit, 2 di belakang koma
-                'null' => false,
-            ],
-        ];
+        // Cek apakah kolom 'invoice' sudah ada
+        if (!$this->db->fieldExists('invoice', 'transactions')) {
+            $fields = [
+                'invoice' => [
+                    'type'       => 'VARCHAR',
+                    'constraint' => 50,
+                    'null'       => false,
+                ],
+            ];
 
-        $this->forge->addColumn('transactions',$fields);
+            $this->forge->addColumn('transactions', $fields);
+        }
     }
 
     public function down()

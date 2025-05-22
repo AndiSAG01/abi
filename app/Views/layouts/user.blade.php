@@ -41,6 +41,20 @@
         margin-top: 10px;
     }
 </style>
+<style>
+    .timeline li::before {
+        content: '';
+        display: inline-block;
+        width: 10px;
+        height: 10px;
+        background: #007bff;
+        border-radius: 50%;
+        margin-right: 10px;
+        position: relative;
+        top: -2px;
+    }
+</style>
+
 
 <body>
 

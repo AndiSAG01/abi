@@ -68,16 +68,16 @@ class CreateAuthTables extends Migration
         $this->forge->createTable('auth_tokens', true);
 
         // // Password Reset Table
-        // $this->forge->addField([
-        //     'id'         => ['type' => 'int', 'constraint' => 11, 'unsigned' => true, 'auto_increment' => true],
-        //     'email'      => ['type' => 'varchar', 'constraint' => 255],
-        //     'ip_address' => ['type' => 'varchar', 'constraint' => 255],
-        //     'user_agent' => ['type' => 'varchar', 'constraint' => 255],
-        //     'token'      => ['type' => 'varchar', 'constraint' => 255, 'null' => true],
-        //     'created_at' => ['type' => 'datetime', 'null' => false],
-        // ]);
-        // $this->forge->addKey('id', true);
-        // $this->forge->createTable('auth_reset_attempts', true);
+        $this->forge->addField([
+            'id'         => ['type' => 'int', 'constraint' => 11, 'unsigned' => true, 'auto_increment' => true],
+            'email'      => ['type' => 'varchar', 'constraint' => 255],
+            'ip_address' => ['type' => 'varchar', 'constraint' => 255],
+            'user_agent' => ['type' => 'varchar', 'constraint' => 255],
+            'token'      => ['type' => 'varchar', 'constraint' => 255, 'null' => true],
+            'created_at' => ['type' => 'datetime', 'null' => false],
+        ]);
+        $this->forge->addKey('id', true);
+        $this->forge->createTable('auth_reset_attempts', true);
 
         // // Activation Attempts Table
         // $this->forge->addField([
@@ -167,7 +167,7 @@ class CreateAuthTables extends Migration
         $this->forge->dropTable('users', true);
         $this->forge->dropTable('auth_logins', true);
         $this->forge->dropTable('auth_tokens', true);
-        // $this->forge->dropTable('auth_reset_attempts', true);
+        $this->forge->dropTable('auth_reset_attempts', true);
         // $this->forge->dropTable('auth_activation_attempts', true);
         // $this->forge->dropTable('auth_groups', true);
         // $this->forge->dropTable('auth_permissions', true);
