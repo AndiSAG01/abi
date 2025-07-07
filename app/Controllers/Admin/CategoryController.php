@@ -59,17 +59,17 @@ class CategoryController extends Controller
         return redirect()->to(base_url('admins/kategori'))->with('success', 'Data Berhasil Ditambahkan');
     }
 
-    public function edit($id)
-    {
-        $data['category'] = $this->categoryModel->find($id);
-        // Ambil nama dari session
-        $data = [
-            'user_name' => session()->get('username'),
-        ];
-        $data['today'] = Time::now('Asia/Jakarta', 'en')->toLocalizedString('MMM d, yyyy');
-        // return view('admins/category/edit', $data);
-        return $this->blade->render('admins.category.edit', $data);
-    }
+   public function edit($id)
+{
+    $data = [
+        'category' => $this->categoryModel->find($id),
+        'user_name' => session()->get('username'),
+        'today' => Time::now('Asia/Jakarta', 'en')->toLocalizedString('MMM d, yyyy'),
+    ];
+
+    return $this->blade->render('admins.category.edit', $data);
+}
+
 
     public function update($id)
     {

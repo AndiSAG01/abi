@@ -62,7 +62,7 @@
                     </li>
                     <li class="nav-item <?= set_active('/transaction-admin/Sedang-Dalam-Perjalanan') ?>">
                         <a class="nav-link d-flex justify-content-between align-items-center" href="/transaction-admin/Sedang-Dalam-Perjalanan">
-                            <span>Sendang Berjalan <i class="fas fa-shipping-fast fa-xs ms-1"></i></span>
+                            <span>Sedang Berjalan <i class="fas fa-shipping-fast fa-xs ms-1"></i></span>
                             <?php if (!empty($waitingCountOtw)) : ?>
                             <span class="badge bg-danger rounded-pill"><?= $waitingCountOtw ?></span>
                             <?php endif; ?>
@@ -86,7 +86,7 @@
             </a>
             <div class="collapse" id="ui-report">
                 <ul class="nav flex-column sub-menu">
-                    <li class="nav-item <?= set_active('/Laporan-pelanggan') ?>"> <a class="nav-link" href="/Laporan-pelanggan">Pelanggan <i
+                    <li class="nav-item <?= set_active('/Laporan-customer') ?>"> <a class="nav-link" href="/Laporan-customer">Pelanggan <i
                                 class="fas fa-users fa-xs" style="margin-left:5px"></i> </a></li>
                     <li class="nav-item <?= set_active('/Laporan-transaksi') ?>"> <a class="nav-link" href="/Laporan-transaksi">Transaksi <i
                                 class="fas fa-sticky-note fa-xs" style="margin-left:5px"></i></a></li>

@@ -32,6 +32,8 @@ $routes->group('', ['filter' => 'login'], function ($routes) {
 
     $routes->get('/admins/pelanggan', [UserController::class, 'index']);
 
+    $routes->delete('/admins/pelanggan/delete/(:num)', [UserController::class, 'delete']);
+
     $routes->get('/admins/kategori', [CategoryController::class, 'index']);
     $routes->post('/admins/kategori/store', [CategoryController::class, 'store']);
     $routes->get('/admins/kategori/edit/(:num)', [CategoryController::class, 'edit']);
@@ -74,7 +76,7 @@ $routes->group('', ['filter' => 'login'], function ($routes) {
 
     #laporan
     #laporan customer
-    $routes->get('/Laporan-pelanggan', [ReportController::class, 'customer']);
+    $routes->get('/Laporan-customer', [ReportController::class, 'customer']);
     $routes->get('Laporan/customer/pdf', [ReportController::class, 'customerPdf']);
     #laporan-transaksi
     $routes->get('/Laporan-transaksi', [ReportController::class, 'transaction']);

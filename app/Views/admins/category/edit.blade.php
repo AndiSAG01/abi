@@ -12,7 +12,7 @@
                         <div class="card-body">
                             <div class="form-group">
                                 <label>Nama Kategori</label>
-                                <input type="text" class="form-control" name="name" value="<?php echo $category['name'] ?>" placeholder="Masukkan Nama Kategori" readonly >
+                                <input type="text" class="form-control" name="name" value="{{$category['name']}}" placeholder="Masukkan Nama Kategori" readonly >
                             </div>
                         </div>
                     </div>
@@ -22,7 +22,7 @@
                         <h5 class="card-header">Data Baru</h5>
                         <div class="card-body">
                             <div class="form-group">
-                                <form action="<?php echo base_url('admins/kategori/update/'.$category['id']) ?>" method="POST">
+                                <form action="{{base_url('admins/kategori/update/'.$category['id']) }}" method="POST">
                                     <label>Nama Kategori</label>
                                     <input type="text" class="form-control" name="name" placeholder="Masukkan Nama Kategori">
                                     <button type="submit" class="btn btn-primary btn-sm mt-3">Update</button>

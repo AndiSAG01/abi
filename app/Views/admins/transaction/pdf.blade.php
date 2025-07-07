@@ -151,7 +151,7 @@
                                 <li class="d-flex align-items-center mb-2">
                                     <div>
                                         <strong>{{ esc($tour['name']) }}</strong><br>
-                                        <span class="text-muted">Lokasi: {{ esc($tour['location']) }}</span>
+                                       
                                     </div>
                                 </li>
                             @endforeach

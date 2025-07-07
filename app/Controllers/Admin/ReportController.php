@@ -116,17 +116,16 @@ class ReportController extends BaseController
             }
 
             $transaction['tours'] = $tours;
-
-            $data = [
+           
+        }
+        $data = [
                 'transactions' => $transactions,
                 'user_name' => session()->get('username'),
                 'today' => Time::now('Asia/Jakarta', 'en')->toLocalizedString('MMM d, yyyy'),
                 'start_date' => $startDate,
                 'end_date' => $endDate,
             ];
-
-            return $this->blade->render('admins.transaction.report', $data);
-        }
+         return $this->blade->render('admins.transaction.report', $data);
     }
 
     public function TransactionPdf()

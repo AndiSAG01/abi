@@ -45,6 +45,42 @@
             </div>
         </div>
     </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script>
+        $(document).ready(function() {
+            $('.btn-delete').click(function(e) {
+                e.preventDefault();
+                var id = $(this).data('id');
+
+                Swal.fire({
+                    title: 'Yakin hapus data?',
+                    text: "Data yang dihapus tidak bisa dikembalikan!",
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonColor: '#d33',
+                    cancelButtonColor: '#aaa',
+                    confirmButtonText: 'Ya, hapus!'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        $.ajax({
+                            url: '/admins/pelanggan/delete/' + id,
+                            type: 'DELETE',
+                            success: function(response) {
+                                Swal.fire('Berhasil!', 'Data telah dihapus.', 'success')
+                                    .then(() => location.reload());
+                            },
+                            error: function() {
+                                Swal.fire('Gagal',
+                                    'Terjadi kesalahan saat menghapus data.',
+                                    'error');
+                            }
+                        });
+                    }
+                });
+            });
+        });
+    </script>
    
 @endsection
 

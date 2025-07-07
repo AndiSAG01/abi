@@ -29,4 +29,15 @@ class UserController extends BaseController
         // return view('admins/customer/index',$data);
         return $this->blade->render('admins.customer.index', $data);
     }
+    public function delete($id)
+    {
+        $userModel = new UserModel(); // Panggil model dengan benar
+
+        if ($userModel->find($id)) {
+            $userModel->delete($id);
+            return redirect()->to(base_url('admins/pelanggan'))->with('success', 'Data berhasil dihapus');
+        }
+
+        return redirect()->to(base_url('admins/pelanggan'))->with('error', 'Pelanggan tidak ditemukan');
+    }
 }
